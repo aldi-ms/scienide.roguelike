@@ -15,11 +15,11 @@ public class Testing : MonoBehaviour
             PathNode.MoveDifficulty.Easy
         };
 
-        //_grid = new GridBase<int>(20, 10, 8f, new Vector3(-70f, -40f), (GridBase<int> grid, int x, int y) => 0);
-        _grid = new BaseGrid<PathNode>(20, 10, 8f, new Vector3(-70f, -40f),
+        _grid = new BaseGrid<PathNode>(20, 10, 10f, new Vector3(-100f, -50f),
             (BaseGrid<PathNode> g, int x, int y) => new PathNode(g, x, y, moveDifficulties[Random.Range(0, 5)]),
             (BaseGrid<PathNode> g, TextMesh[,] tm) => PathNodeDebug(g, tm));
-        var path = AStarPathfinding.Pathfind(_grid, 0, 0, 11, 1);
+
+        var path = AStarPathfinding.Pathfind(_grid, 0, 0, 2, 2);
     }
 
     private void PathNodeDebug(BaseGrid<PathNode> gridArray, TextMesh[,] debugTextArray)

@@ -8,6 +8,13 @@ namespace SCiENiDE.Core
     {
         public static PathNode[] Pathfind(BaseGrid<PathNode> map, int startX, int startY, int endX, int endY)
         {
+            PathNode endNode = map.GetGridCell(endX, endY);
+            if (endNode == null || endNode.NodeMoveDifficulty == PathNode.MoveDifficulty.NotWalkable)
+            {
+                return null;
+            }
+            Dictionary<PathNode, PathNode> cameFrom = new Dictionary<PathNode, PathNode>();
+            Dictionary<PathNode, int> costSoFar = new Dictionary<PathNode, int>();
             PriorityQueue<PathNode> openSet = new PriorityQueue<PathNode>(
                 Comparer<PathNode>.Create((x, y) =>
                 {
@@ -15,11 +22,12 @@ namespace SCiENiDE.Core
                     if (x == null && y != null) return 1;
                     if (x != null && y == null) return -1;
 
-                    return x.NodeMoveDifficulty - y.NodeMoveDifficulty;
+                    return (x.fScore == y.fScore)
+                        ? x.fScore.CompareTo(y.fScore)
+                        : x.NodeMoveDifficulty - y.NodeMoveDifficulty;
                 }),
                 map.Width * map.Height);
 
-            Dictionary<PathNode, PathNode> cameFrom = new Dictionary<PathNode, PathNode>();
             PathNode startNode = map.GetGridCell(startX, startY);
             if (startNode == null)
             {
@@ -27,6 +35,7 @@ namespace SCiENiDE.Core
             }
 
             openSet.Push(startNode);
+            costSoFar.Add(startNode, 0);
             cameFrom.Add(startNode, null);
             startNode.Visited = true;
             startNode.IsPath = true;
@@ -43,21 +52,32 @@ namespace SCiENiDE.Core
 
                 foreach (PathNode neighbourNode in currentNode.NeighbourNodes)
                 {
-                    if (!cameFrom.ContainsKey(neighbourNode))
+                    int newCost = costSoFar[currentNode] + (int)neighbourNode.NodeMoveDifficulty;
+                    if (!costSoFar.ContainsKey(neighbourNode)
+                        || newCost < costSoFar[neighbourNode]) //(costSoFar.ContainsKey(neighbourNode) && 
                     {
+                        costSoFar[neighbourNode] = newCost;
+                        neighbourNode.fScore = newCost + Heuristic(neighbourNode.x, neighbourNode.y, endX, endY);
                         openSet.Push(neighbourNode);
-                        cameFrom.Add(neighbourNode, currentNode);
+                        cameFrom[neighbourNode] = currentNode;
                         neighbourNode.Visited = true;
                         map.TriggerOnGridCellChanged(neighbourNode.x, neighbourNode.y);
                     }
                 }
             }
 
-            Debug.Log($"Nodes visited: [{cameFrom.Count}].");
-
             return RecostructPath(map, cameFrom, startX, startY, endX, endY);
         }
 
+        private const float MainMoveCost = 1f;
+        private readonly static float DiagonalMoveCost = Mathf.Sqrt(2);
+        private static float Heuristic(int startX, int startY, int endX, int endY)
+        {
+            int dx = Mathf.Abs(startX - endX);
+            int dy = Mathf.Abs(startY - endY);
+            float h = MainMoveCost * (dx + dy) + (DiagonalMoveCost - 2 * MainMoveCost) * Mathf.Min(dx, dy);
+            return h;
+        }
         private static PathNode[] RecostructPath(BaseGrid<PathNode> map, Dictionary<PathNode, PathNode> cameFrom, int startX, int startY, int endX, int endY)
         {
             PathNode current = map.GetGridCell(endX, endY);
@@ -76,6 +96,7 @@ namespace SCiENiDE.Core
             path.Add(startNode);
             path.Reverse();
 
+            Debug.Log($"Nodes visited: [{cameFrom.Count}].");
             Debug.Log($"Path nodes count: [{path.Count}].");
             Debug.Log($"Path score: [{path.Select(x => (int)x.NodeMoveDifficulty).Sum()}].");
 

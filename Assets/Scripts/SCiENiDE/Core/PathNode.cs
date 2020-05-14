@@ -19,7 +19,6 @@ namespace SCiENiDE.Core
         private BaseGrid<PathNode> _gridMap;
         private PathNode[] _neighbourNodes;
 
-
         public PathNode(BaseGrid<PathNode> gridMap, int x, int y, MoveDifficulty moveDifficulty = MoveDifficulty.Medium)
         {
             _x = x;
@@ -67,10 +66,11 @@ namespace SCiENiDE.Core
         public bool IsPath { get; set; }
         public int x { get { return _x; } }
         public int y { get { return _y; } }
+        public float fScore { get; set; }
 
         public override string ToString()
         {
-            return $"{_x}:{_y}{(Visited ? "*" : string.Empty)}\r\n{(int)_moveDifficulty}";
+            return $"{_x}:{_y}{(Visited ? "*" : string.Empty)}\r\n{(int)_moveDifficulty}/{fScore.ToString("F1")}";
         }
     }
 }
