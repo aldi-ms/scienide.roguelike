@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace SCiENiDE.Core
 {
-    public class GridBase<T>
+    public class BaseGrid<T>
     {
         public event EventHandler<OnGridCellChangedEventArgs> OnGridCellChanged;
         public class OnGridCellChangedEventArgs
@@ -21,7 +21,8 @@ namespace SCiENiDE.Core
         private TextMesh[,] _debugTextArray;
         private Vector3 _originPosition;
 
-        public GridBase(int width, int height, float cellSize, Vector3 originPosition, Func<GridBase<T>, int, int, T> createGridCellFunc)
+        public BaseGrid(int width, int height, float cellSize, Vector3 originPosition, Func<BaseGrid<T>, int, int, T> createGridCellFunc,
+            Action<BaseGrid<T>, TextMesh[,]> showDebug = null)
         {
             _width = width;
             _height = height;
@@ -39,33 +40,20 @@ namespace SCiENiDE.Core
                 }
             }
 
-            if (ShowDebug)
-            {
-                for (int x = 0; x < _gridArray.GetLength(0); x++)
-                {
-                    for (int y = 0; y < _gridArray.GetLength(1); y++)
-                    {
-                        _debugTextArray[x, y] = Utils.CreateWorldText(
-                            _gridArray[x, y]?.ToString(),
-                            null,
-                            GetWorldPosition(x, y) + new Vector3(cellSize, cellSize) * .5f,
-                            24,
-                            Color.white,
-                            TextAnchor.MiddleCenter);
+            showDebug?.Invoke(this, _debugTextArray);
+        }
 
-                        Debug.DrawLine(GetWorldPosition(x, y), GetWorldPosition(x, y + 1), Color.white, 100f);
-                        Debug.DrawLine(GetWorldPosition(x, y), GetWorldPosition(x + 1, y), Color.white, 100f);
-                    }
-                }
-
-                Debug.DrawLine(GetWorldPosition(0, height), GetWorldPosition(width, height), Color.white, 100f);
-                Debug.DrawLine(GetWorldPosition(width, 0), GetWorldPosition(width, height), Color.white, 100f);
-
-                OnGridCellChanged += (object sender, OnGridCellChangedEventArgs args) =>
-                {
-                    _debugTextArray[args.x, args.y].text = _gridArray[args.x, args.y]?.ToString();
-                };
-            }
+        public int Width
+        {
+            get { return _width; }
+        }
+        public int Height
+        {
+            get { return _height; }
+        }
+        public float CellSize
+        {
+            get { return _cellSize; }
         }
 
         public void SetGridCell(int x, int y, T value)
@@ -97,6 +85,7 @@ namespace SCiENiDE.Core
             return GetGridCell(x, y);
         }
 
+
         public void TriggerOnGridCellChanged(int x, int y)
         {
             OnGridCellChanged?.Invoke(this, new OnGridCellChangedEventArgs { x = x, y = y });
@@ -107,7 +96,7 @@ namespace SCiENiDE.Core
             x = Mathf.FloorToInt((worldPosition - _originPosition).x / _cellSize);
             y = Mathf.FloorToInt((worldPosition - _originPosition).y / _cellSize);
         }
-        private Vector3 GetWorldPosition(int x, int y)
+        public Vector3 GetWorldPosition(int x, int y)
         {
             return new Vector3(x, y) * _cellSize + _originPosition;
         }

@@ -34,5 +34,16 @@ namespace SCiENiDE.Core
             Vector3 worldPosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
             return worldPosition;
         }
+
+        //public static void InitializePathNodeNeighbours(BaseGrid<PathNode> map)
+        //{
+        //    for (int x = 0; x < map.GetWidth(); x++)
+        //    {
+        //        for (int y = 0; y < map.GetHeight(); y++)
+        //        {
+        //            PathNode currentNode = map.GetGridCell(x, y);
+        //        }
+        //    }
+        //}
     }
 }
