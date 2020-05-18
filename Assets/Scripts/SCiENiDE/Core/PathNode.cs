@@ -7,14 +7,14 @@ namespace SCiENiDE.Core
         public enum MoveDifficulty
         {
             None = 0,
-            Easy = 10,
-            Medium = 50,
-            Hard = 75,
+            Easy = 1,
+            Medium = 2,
+            Hard = 3,
             NotWalkable = 100
         };
 
-        private int _x;
-        private int _y;
+        private readonly int _x;
+        private readonly int _y;
         private MoveDifficulty _moveDifficulty;
         private BaseGrid<PathNode> _gridMap;
         private PathNode[] _neighbourNodes;

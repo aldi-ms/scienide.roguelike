@@ -6,6 +6,8 @@ namespace SCiENiDE.Core
 {
     public class AStarPathfinding
     {
+        private const float p = 1f / 1000f;
+
         public static PathNode[] Pathfind(BaseGrid<PathNode> map, int startX, int startY, int endX, int endY)
         {
             PathNode endNode = map.GetGridCell(endX, endY);
@@ -13,6 +15,7 @@ namespace SCiENiDE.Core
             {
                 return null;
             }
+
             Dictionary<PathNode, PathNode> cameFrom = new Dictionary<PathNode, PathNode>();
             Dictionary<PathNode, int> costSoFar = new Dictionary<PathNode, int>();
             PriorityQueue<PathNode> openSet = new PriorityQueue<PathNode>(
@@ -22,7 +25,7 @@ namespace SCiENiDE.Core
                     if (x == null && y != null) return 1;
                     if (x != null && y == null) return -1;
 
-                    return (x.fScore == y.fScore)
+                    return (x.fScore != y.fScore)
                         ? x.fScore.CompareTo(y.fScore)
                         : x.NodeMoveDifficulty - y.NodeMoveDifficulty;
                 }),
@@ -54,10 +57,11 @@ namespace SCiENiDE.Core
                 {
                     int newCost = costSoFar[currentNode] + (int)neighbourNode.NodeMoveDifficulty;
                     if (!costSoFar.ContainsKey(neighbourNode)
-                        || newCost < costSoFar[neighbourNode]) //(costSoFar.ContainsKey(neighbourNode) && 
+                        || newCost < costSoFar[neighbourNode])
                     {
                         costSoFar[neighbourNode] = newCost;
-                        neighbourNode.fScore = newCost + Heuristic(neighbourNode.x, neighbourNode.y, endX, endY);
+                        float hScore = Heuristic(neighbourNode.x, neighbourNode.y, endX, endY) * (1f + p);
+                        neighbourNode.fScore = newCost + hScore;
                         openSet.Push(neighbourNode);
                         cameFrom[neighbourNode] = currentNode;
                         neighbourNode.Visited = true;
@@ -75,8 +79,15 @@ namespace SCiENiDE.Core
         {
             int dx = Mathf.Abs(startX - endX);
             int dy = Mathf.Abs(startY - endY);
-            float h = MainMoveCost * (dx + dy) + (DiagonalMoveCost - 2 * MainMoveCost) * Mathf.Min(dx, dy);
-            return h;
+
+            /* Euclidean distance */
+            // return Mathf.Sqrt(dx * dy + dy * dy);
+
+            /* Manhattan distance */
+            //return 2 * dx + dy;
+
+            /* Diagonal distance */
+            return MainMoveCost * (dx + dy) + (DiagonalMoveCost - 2 * MainMoveCost) * Mathf.Min(dx, dy);
         }
         private static PathNode[] RecostructPath(BaseGrid<PathNode> map, Dictionary<PathNode, PathNode> cameFrom, int startX, int startY, int endX, int endY)
         {
