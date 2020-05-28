@@ -43,6 +43,17 @@ namespace SCiENiDE.Core
             showDebug?.Invoke(this, _debugTextArray);
         }
 
+        public T this[int x, int y]
+        {
+            get
+            {
+                return GetGridCell(x, y);
+            }
+            set
+            {
+                SetGridCell(x, y, value);
+            }
+        }
         public int Width
         {
             get { return _width; }

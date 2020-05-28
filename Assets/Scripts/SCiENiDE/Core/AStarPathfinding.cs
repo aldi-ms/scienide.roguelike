@@ -8,18 +8,18 @@ namespace SCiENiDE.Core
     {
         private const float p = 1f / 1000f;
 
-        public static PathNode[] Pathfind(BaseGrid<PathNode> map, int startX, int startY, int endX, int endY)
+        public static T[] Pathfind<T>(BaseGrid<T> map, int startX, int startY, int endX, int endY) where T : class, IPathNode<T>
         {
-            PathNode endNode = map.GetGridCell(endX, endY);
-            if (endNode == null || endNode.NodeMoveDifficulty == PathNode.MoveDifficulty.NotWalkable)
+            T endNode = map.GetGridCell(endX, endY);
+            if (endNode == null || endNode.Terrain.Difficulty == MoveDifficulty.NotWalkable)
             {
                 return null;
             }
 
-            Dictionary<PathNode, PathNode> cameFrom = new Dictionary<PathNode, PathNode>();
-            Dictionary<PathNode, int> costSoFar = new Dictionary<PathNode, int>();
-            PriorityQueue<PathNode> openSet = new PriorityQueue<PathNode>(
-                Comparer<PathNode>.Create((x, y) =>
+            Dictionary<T, T> cameFrom = new Dictionary<T, T>();
+            Dictionary<T, int> costSoFar = new Dictionary<T, int>();
+            PriorityQueue<T> openSet = new PriorityQueue<T>(
+                Comparer<T>.Create((x, y) =>
                 {
                     if (x == null && y == null) return 0;
                     if (x == null && y != null) return 1;
@@ -27,11 +27,11 @@ namespace SCiENiDE.Core
 
                     return (x.fScore != y.fScore)
                         ? x.fScore.CompareTo(y.fScore)
-                        : x.NodeMoveDifficulty - y.NodeMoveDifficulty;
+                        : x.Terrain.Difficulty - y.Terrain.Difficulty;
                 }),
                 map.Width * map.Height);
 
-            PathNode startNode = map.GetGridCell(startX, startY);
+            T startNode = map.GetGridCell(startX, startY);
             if (startNode == null)
             {
                 return null;
@@ -46,16 +46,16 @@ namespace SCiENiDE.Core
 
             while (openSet.Peek() != null)
             {
-                PathNode currentNode = openSet.Pop();
+                T currentNode = openSet.Pop();
 
                 if (currentNode.x == endX && currentNode.y == endY)
                 {
                     break;
                 }
 
-                foreach (PathNode neighbourNode in currentNode.NeighbourNodes)
+                foreach (T neighbourNode in currentNode.NeighbourNodes)
                 {
-                    int newCost = costSoFar[currentNode] + (int)neighbourNode.NodeMoveDifficulty;
+                    int newCost = costSoFar[currentNode] + (int)neighbourNode.Terrain.Difficulty;
                     if (!costSoFar.ContainsKey(neighbourNode)
                         || newCost < costSoFar[neighbourNode])
                     {
@@ -89,12 +89,12 @@ namespace SCiENiDE.Core
             /* Diagonal distance */
             return MainMoveCost * (dx + dy) + (DiagonalMoveCost - 2 * MainMoveCost) * Mathf.Min(dx, dy);
         }
-        private static PathNode[] RecostructPath(BaseGrid<PathNode> map, Dictionary<PathNode, PathNode> cameFrom, int startX, int startY, int endX, int endY)
+        private static T[] RecostructPath<T>(BaseGrid<T> map, Dictionary<T, T> cameFrom, int startX, int startY, int endX, int endY) where T : class, IPathNode<T>
         {
-            PathNode current = map.GetGridCell(endX, endY);
-            PathNode startNode = map.GetGridCell(startX, startY);
+            T current = map.GetGridCell(endX, endY);
+            T startNode = map.GetGridCell(startX, startY);
 
-            List<PathNode> path = new List<PathNode>();
+            List<T> path = new List<T>();
 
             while (current != startNode)
             {
@@ -109,7 +109,7 @@ namespace SCiENiDE.Core
 
             Debug.Log($"Nodes visited: [{cameFrom.Count}].");
             Debug.Log($"Path nodes count: [{path.Count}].");
-            Debug.Log($"Path score: [{path.Select(x => (int)x.NodeMoveDifficulty).Sum()}].");
+            Debug.Log($"Path score: [{path.Select(x => (int)x.Terrain.Difficulty).Sum()}].");
 
             return path.ToArray();
         }

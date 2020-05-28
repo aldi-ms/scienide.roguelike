@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace SCiENiDE.Core
 {
-    public class PriorityQueue<T> : IEnumerable<T> where T : class
+    public class PriorityQueue<T> where T : class
     {
         private IComparer<T> _comparer;
         private T[] _dataArray;
@@ -39,15 +39,6 @@ namespace SCiENiDE.Core
                 return _dataArray[0];
 
             return null;
-        }
-
-        public IEnumerator<T> GetEnumerator()
-        {
-            throw new NotImplementedException();
-        }
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            throw new NotImplementedException();
         }
     }
 }

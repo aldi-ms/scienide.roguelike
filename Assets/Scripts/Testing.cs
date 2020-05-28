@@ -4,25 +4,28 @@ using UnityEngine;
 
 public class Testing : MonoBehaviour
 {
-    private BaseGrid<PathNode> _grid;
-    private void Start()
-    {
-        List<PathNode.MoveDifficulty> moveDifficulties = new List<PathNode.MoveDifficulty> {
-            PathNode.MoveDifficulty.Hard,
-            PathNode.MoveDifficulty.Medium,
-            PathNode.MoveDifficulty.None,
-            PathNode.MoveDifficulty.NotWalkable,
-            PathNode.MoveDifficulty.Easy
+    private List<MoveDifficulty> _moveDifficulties = new List<MoveDifficulty> {
+            MoveDifficulty.Hard,
+            MoveDifficulty.Medium,
+            MoveDifficulty.None,
+            MoveDifficulty.NotWalkable,
+            MoveDifficulty.Easy
         };
 
-        _grid = new BaseGrid<PathNode>(24, 14, 8f, new Vector3(-100f, -50f),
-            (BaseGrid<PathNode> g, int x, int y) => new PathNode(g, x, y), //, moveDifficulties[Random.Range(0, 5)]
-            (BaseGrid<PathNode> g, TextMesh[,] tm) => PathNodeDebug(g, tm));
+    private BaseGrid<MapNode> _map;
+    private void Start()
+    {
+        MapGenerator mapGeneration = new MapGenerator(34, 18, (g, tm) => BaseGridDebug(g, tm));
+        var map = mapGeneration.GenerateMap();
 
-        var path = AStarPathfinding.Pathfind(_grid, 0, 0, 9, 7);
+        //_map = new BaseGrid<MapNode>(24, 14, 9f, new Vector3(-100f, -50f),
+        //    (BaseGrid<MapNode> g, int x, int y) => new MapNode(g, x, y, _moveDifficulties[Random.Range(0, 5)]),
+        //    (BaseGrid<MapNode> g, TextMesh[,] tm) => BaseGridDebug(g, tm));
+        //var path = AStarPathfinding.Pathfind(map, 0, 0, 9, 7);
     }
 
-    private void PathNodeDebug(BaseGrid<PathNode> gridArray, TextMesh[,] debugTextArray)
+    public void BaseGridDebug<T>(BaseGrid<T> gridArray, TextMesh[,] debugTextArray)
+        where T : IPathNode<T>
     {
         for (int x = 0; x < gridArray.Width; x++)
         {
@@ -32,8 +35,8 @@ public class Testing : MonoBehaviour
                     gridArray.GetGridCell(x, y)?.ToString(),
                     null,
                     gridArray.GetWorldPosition(x, y) + new Vector3(gridArray.CellSize, gridArray.CellSize) * .5f,
-                    24,
-                    GetColorFromNodeWalkDifficulty(gridArray.GetGridCell(x, y).NodeMoveDifficulty),
+                    18,
+                    GetColorFromNodeWalkDifficulty(gridArray.GetGridCell(x, y).Terrain.Difficulty),
                     TextAnchor.MiddleCenter);
 
                 Debug.DrawLine(gridArray.GetWorldPosition(x, y), gridArray.GetWorldPosition(x, y + 1), Color.white, 100f);
@@ -44,9 +47,9 @@ public class Testing : MonoBehaviour
         Debug.DrawLine(gridArray.GetWorldPosition(0, gridArray.Height), gridArray.GetWorldPosition(gridArray.Width, gridArray.Height), Color.white, 100f);
         Debug.DrawLine(gridArray.GetWorldPosition(gridArray.Width, 0), gridArray.GetWorldPosition(gridArray.Width, gridArray.Height), Color.white, 100f);
 
-        gridArray.OnGridCellChanged += (object sender, BaseGrid<PathNode>.OnGridCellChangedEventArgs args) =>
+        gridArray.OnGridCellChanged += (object sender, BaseGrid<T>.OnGridCellChangedEventArgs args) =>
         {
-            PathNode gridCell = gridArray.GetGridCell(args.x, args.y);
+            T gridCell = gridArray.GetGridCell(args.x, args.y);
             debugTextArray[args.x, args.y].text = gridCell?.ToString();
             if (gridCell != null)
             {
@@ -57,24 +60,27 @@ public class Testing : MonoBehaviour
                 else if (gridCell.Visited)
                 {
                     debugTextArray[args.x, args.y].color = Color.grey;
+                } else
+                {
+                    debugTextArray[args.x, args.y].color = GetColorFromNodeWalkDifficulty(gridCell.Terrain.Difficulty);
                 }
             }
         };
     }
-    private Color GetColorFromNodeWalkDifficulty(PathNode.MoveDifficulty difficulty)
+    private Color GetColorFromNodeWalkDifficulty(MoveDifficulty difficulty)
     {
         switch (difficulty)
         {
-            case PathNode.MoveDifficulty.None:
+            case MoveDifficulty.None:
                 return Color.white;
-            case PathNode.MoveDifficulty.Easy:
+            case MoveDifficulty.Easy:
                 return Color.green;
-            case PathNode.MoveDifficulty.Medium:
+            case MoveDifficulty.Medium:
                 return Color.yellow;
-            case PathNode.MoveDifficulty.Hard:
+            case MoveDifficulty.Hard:
                 return Color.red;
-            case PathNode.MoveDifficulty.NotWalkable:
-                return Color.black;
+            case MoveDifficulty.NotWalkable:
+                return Color.blue;
             default:
                 return Color.white;
         }
