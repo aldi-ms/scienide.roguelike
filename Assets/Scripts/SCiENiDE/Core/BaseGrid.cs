@@ -96,6 +96,17 @@ namespace SCiENiDE.Core
             return GetGridCell(x, y);
         }
 
+        public void TriggetAllGridCellsChanged()
+        {
+            for (int x = 0; x < _width; x++)
+            {
+                for (int y = 0; y < _height; y++)
+                {
+                    TriggerOnGridCellChanged(x, y);
+                }
+            }
+        }
+
 
         public void TriggerOnGridCellChanged(int x, int y)
         {
