@@ -15,8 +15,8 @@ public class Testing : MonoBehaviour
     private BaseGrid<MapNode> _map;
     private void Start()
     {
-        MapGenerator mapGeneration = new MapGenerator(34, 18, (g, tm) => BaseGridDebug(g, tm));
-        var map = mapGeneration.GenerateMap();
+        MapGenerator mapGeneration = new MapGenerator(34, 18, false, 13407531, showDebugFunc: (g, tm) => BaseGridDebug(g, tm));
+        var map = mapGeneration.GenerateMap(MapType.Rooms);
 
         //_map = new BaseGrid<MapNode>(24, 14, 9f, new Vector3(-100f, -50f),
         //    (BaseGrid<MapNode> g, int x, int y) => new MapNode(g, x, y, _moveDifficulties[Random.Range(0, 5)]),
@@ -60,7 +60,8 @@ public class Testing : MonoBehaviour
                 else if (gridCell.Visited)
                 {
                     debugTextArray[args.x, args.y].color = Color.grey;
-                } else
+                }
+                else
                 {
                     debugTextArray[args.x, args.y].color = GetColorFromNodeWalkDifficulty(gridCell.Terrain.Difficulty);
                 }

@@ -8,7 +8,6 @@ namespace SCiENiDE.Core
         private int _y;
         private NodeTerrain _terrain;
         private BaseGrid<T> _gridMap;
-        private T[] _neighbourNodes;
 
         public PathNode(BaseGrid<T> gridMap, int x, int y, MoveDifficulty moveDifficulty = MoveDifficulty.Medium)
         {
@@ -25,11 +24,6 @@ namespace SCiENiDE.Core
         {
             get
             {
-                if (_neighbourNodes != null)
-                {
-                    return _neighbourNodes;
-                }
-
                 List<T> tempNeighbourNodes = new List<T>();
                 for (int dX = -1; dX <= 1; dX++)
                 {
@@ -48,8 +42,7 @@ namespace SCiENiDE.Core
                     }
                 }
 
-                _neighbourNodes = tempNeighbourNodes.ToArray();
-                return _neighbourNodes;
+                return tempNeighbourNodes.ToArray();
             }
         }
         public NodeTerrain Terrain

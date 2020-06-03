@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using Random = UnityEngine.Random;
@@ -7,22 +8,49 @@ namespace SCiENiDE.Core
 {
     public class MapGenerator
     {
+        private bool _useRandomSeed;
+
         private int _width;
         private int _height;
         private int _totalNodeCount;
-        private Action<BaseGrid<MapNode>, TextMesh[,]> _debug;
-        private RectInt[] _rooms;
-        private BaseGrid<MapNode> _map;
+        private int _seed;
 
-        public MapGenerator(int width, int height, Action<BaseGrid<MapNode>, TextMesh[,]> showDebug = null)
+        private RectInt[] _rooms;
+        private Action<BaseGrid<MapNode>, TextMesh[,]> _debug;
+        private BaseGrid<MapNode> _map;
+        private int _roomsSmoothing = 2;
+        private int _randomFillSmoothing = 3;
+
+        public MapGenerator(
+            int width,
+            int height,
+            bool useRandomSeed = true,
+            int seed = -1,
+            Action<BaseGrid<MapNode>, TextMesh[,]> showDebugFunc = null)
         {
             _width = width;
             _height = height;
             _totalNodeCount = _width * _height;
-            _debug = showDebug;
+            _debug = showDebugFunc;
+            _seed = seed;
+            _useRandomSeed = useRandomSeed;
 
-            int minRoomsRange = Mathf.RoundToInt(_totalNodeCount * (1.2f / 100));
-            int maxRoomsRange = Mathf.RoundToInt(_totalNodeCount * (3f / 100));
+            if (_useRandomSeed)
+            {
+                _seed = Environment.TickCount;
+                Random.InitState(_seed);
+
+                Debug.Log($"Init PRNG with new seed [{_seed}].");
+            }
+            else
+            {
+                Random.InitState(_seed);
+
+                Debug.Log($"Init PRNG with seed [{_seed}].");
+            }
+
+            int minRoomsRange = Mathf.RoundToInt(_totalNodeCount * .012f);
+            int maxRoomsRange = Mathf.RoundToInt(_totalNodeCount * .03f);
             _rooms = new RectInt[Random.Range(minRoomsRange, maxRoomsRange)];
 
             _map = new BaseGrid<MapNode>(
@@ -34,14 +62,65 @@ namespace SCiENiDE.Core
                 _debug);
         }
 
-        public BaseGrid<MapNode> GenerateMap()
+        public BaseGrid<MapNode> GenerateMap(MapType mapType)
         {
-            GenerateRooms();
-            _map.RunCARuleset();
+            switch (mapType)
+            {
+                case MapType.Rooms:
+                    {
+                        GenerateRooms();
+                        for (int i = 0; i < _roomsSmoothing; i++)
+                            _map.RunCARuleset(mapType);
+                    }
+                    break;
 
+                case MapType.RandomFill:
+                    {
+                        RandomFillMap();
+                        for (int i = 0; i < _randomFillSmoothing; i++)
+                            _map.RunCARuleset(mapType);
+                    }
+                    break;
+
+                default:
+                    break;
+            }
+
+            //CheckNodeAvailability();
             return _map;
         }
 
+        private void CheckNodeAvailability()
+        {
+            List<MapNode> nodesToPathfind = new List<MapNode>();
+            for (int x = 0; x < _width; x++)
+            {
+                for (int y = 0; y < _height; y++)
+                {
+                    MapNode node = _map.GetGridCell(x, y);
+                    if (node.Terrain.Difficulty != MoveDifficulty.Easy)
+                    {
+                        continue;
+                    }
+
+                    nodesToPathfind.Add(node);
+                }
+            }
+
+            for (int x = 0; x < nodesToPathfind.Count; x++)
+            {
+                for (int y = 0; y < nodesToPathfind.Count; y++)
+                {
+                    if (x == y) continue;
+                    MapNode[] path = AStarPathfinding.Pathfind(_map, nodesToPathfind[x].x, nodesToPathfind[x].y, nodesToPathfind[y].x, nodesToPathfind[y].y);
+
+                    if (path == null)
+                    {
+                        Debug.Log($"No path found from [{nodesToPathfind[x]}] to [{nodesToPathfind[y]}]");
+                    }
+                }
+            }
+        }
         private void GenerateRooms()
         {
             Debug.Log($"Generating [{_rooms.Length}] rooms.");
@@ -57,12 +136,10 @@ namespace SCiENiDE.Core
                 }
             }
         }
-
         private Vector2Int GetRandomRoomSize()
         {
             return new Vector2Int(Random.Range(3, 7), Random.Range(3, 6));
         }
-
         private RectInt GenerateRoom(
             int roomWidth,
             int roomHeight,
@@ -100,13 +177,15 @@ namespace SCiENiDE.Core
 
             return createdRoom;
         }
-
-        private enum MapFeature
+        private void RandomFillMap(int wallPercent = 44)
         {
-            Rooms,
-            Terrain,
-            Unit,
-            Object
+            for (int x = 0; x < _width; x++)
+            {
+                for (int y = 0; y < _height; y++)
+                {
+                    _map[x, y].Terrain.Difficulty = Random.Range(0, 100) < wallPercent ? MoveDifficulty.NotWalkable : MoveDifficulty.Easy;
+                }
+            }
         }
     }
 }
