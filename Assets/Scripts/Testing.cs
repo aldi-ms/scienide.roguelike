@@ -12,16 +12,10 @@ public class Testing : MonoBehaviour
             MoveDifficulty.Easy
         };
 
-    private BaseGrid<MapNode> _map;
     private void Start()
     {
-        MapGenerator mapGeneration = new MapGenerator(34, 18, false, 13407531, showDebugFunc: (g, tm) => BaseGridDebug(g, tm));
-        var map = mapGeneration.GenerateMap(MapType.Rooms);
-
-        //_map = new BaseGrid<MapNode>(24, 14, 9f, new Vector3(-100f, -50f),
-        //    (BaseGrid<MapNode> g, int x, int y) => new MapNode(g, x, y, _moveDifficulties[Random.Range(0, 5)]),
-        //    (BaseGrid<MapNode> g, TextMesh[,] tm) => BaseGridDebug(g, tm));
-        //var path = AStarPathfinding.Pathfind(map, 0, 0, 9, 7);
+        MapGenerator mapGeneration = new MapGenerator(34, 18, showDebugFunc: (g, tm) => BaseGridDebug(g, tm), fillPercent: 47);
+        var map = mapGeneration.GenerateMap(MapType.RandomFill, 5);
     }
 
     public void BaseGridDebug<T>(BaseGrid<T> gridArray, TextMesh[,] debugTextArray)

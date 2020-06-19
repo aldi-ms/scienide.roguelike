@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace SCiENiDE.Core
 {
@@ -24,8 +25,11 @@ namespace SCiENiDE.Core
                     MapType.RandomFill,
                     (MapNode[] neighbours, NodeTerrain currentTerrain) =>
                     {
-                        if (neighbours.Length < 4) return MoveDifficulty.NotWalkable;
-                        if (neighbours.Length > 4) return MoveDifficulty.Easy;
+                        //if (neighbours.Length < 8) return MoveDifficulty.NotWalkable;
+                        int d = 8 - neighbours.Length;
+                        int wallCount = neighbours.Count(x => x.Terrain.Difficulty == MoveDifficulty.NotWalkable) + d;
+                        if (wallCount > 4) return MoveDifficulty.NotWalkable;
+                        if (wallCount < 4) return MoveDifficulty.Easy;
                         return currentTerrain.Difficulty;
                     }
                 }

@@ -3,6 +3,7 @@
     public enum MapType
     {
         Rooms = 0,
-        RandomFill
+        RandomFill,
+        SolidFill
     }
 }

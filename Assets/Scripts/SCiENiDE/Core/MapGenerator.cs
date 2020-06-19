@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Assets.Scripts.SCiENiDE.Core;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
@@ -14,19 +15,19 @@ namespace SCiENiDE.Core
         private int _height;
         private int _totalNodeCount;
         private int _seed;
+        private int _fillPercent;
 
         private RectInt[] _rooms;
         private Action<BaseGrid<MapNode>, TextMesh[,]> _debug;
         private BaseGrid<MapNode> _map;
-        private int _roomsSmoothing = 2;
-        private int _randomFillSmoothing = 3;
 
         public MapGenerator(
             int width,
             int height,
             bool useRandomSeed = true,
             int seed = -1,
-            Action<BaseGrid<MapNode>, TextMesh[,]> showDebugFunc = null)
+            Action<BaseGrid<MapNode>, TextMesh[,]> showDebugFunc = null,
+            int fillPercent = 43)
         {
             _width = width;
             _height = height;
@@ -34,6 +35,7 @@ namespace SCiENiDE.Core
             _debug = showDebugFunc;
             _seed = seed;
             _useRandomSeed = useRandomSeed;
+            _fillPercent = fillPercent;
 
             if (_useRandomSeed)
             {
@@ -62,23 +64,57 @@ namespace SCiENiDE.Core
                 _debug);
         }
 
-        public BaseGrid<MapNode> GenerateMap(MapType mapType)
+        public BaseGrid<MapNode> GenerateMap(MapType mapType, int smoothing)
         {
             switch (mapType)
             {
                 case MapType.Rooms:
                     {
                         GenerateRooms();
-                        for (int i = 0; i < _roomsSmoothing; i++)
+                        for (int i = 0; i < smoothing; i++)
                             _map.RunCARuleset(mapType);
                     }
                     break;
 
                 case MapType.RandomFill:
                     {
-                        RandomFillMap();
-                        for (int i = 0; i < _randomFillSmoothing; i++)
+                        RandomFillMap(_fillPercent);
+                        for (int i = 0; i < smoothing; i++)
                             _map.RunCARuleset(mapType);
+
+                        Dictionary<MoveDifficulty, List<Room>> roomRegions = GetMapRegions();
+                        Dictionary<MoveDifficulty, List<Room>> survivingRoomRegions = new Dictionary<MoveDifficulty, List<Room>>();
+                        foreach (MoveDifficulty moveDifficultyKey in roomRegions.Keys)
+                        {
+                            if (moveDifficultyKey == MoveDifficulty.NotWalkable) continue;
+
+                            foreach (Room room in roomRegions[moveDifficultyKey])
+                            {
+                                if (room.Size < 6)
+                                {
+                                    foreach (var node in room.Tiles)
+                                    {
+                                        node.Terrain.Difficulty = MoveDifficulty.NotWalkable;
+                                    }
+                                }
+                                else
+                                {
+                                    if (!survivingRoomRegions.ContainsKey(moveDifficultyKey))
+                                    {
+                                        survivingRoomRegions[moveDifficultyKey] = new List<Room> { room };
+                                    }
+                                    else
+                                    {
+                                        survivingRoomRegions[moveDifficultyKey].Add(room);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    break;
+
+                case MapType.SolidFill:
+                    {
                     }
                     break;
 
@@ -86,40 +122,39 @@ namespace SCiENiDE.Core
                     break;
             }
 
-            //CheckNodeAvailability();
+            // CheckNodeAvailability();
             return _map;
         }
-
-        private void CheckNodeAvailability()
+        private Dictionary<MoveDifficulty, List<Room>> GetMapRegions()
         {
-            List<MapNode> nodesToPathfind = new List<MapNode>();
+            Dictionary<MoveDifficulty, List<Room>> roomRegions = new Dictionary<MoveDifficulty, List<Room>>();
             for (int x = 0; x < _width; x++)
             {
                 for (int y = 0; y < _height; y++)
                 {
-                    MapNode node = _map.GetGridCell(x, y);
-                    if (node.Terrain.Difficulty != MoveDifficulty.Easy)
+                    MapNode currentNode = _map.GetGridCell(x, y);
+                    if (currentNode == null) continue;
+
+                    MoveDifficulty currentTerrain = currentNode.Terrain.Difficulty;
+
+                    if (!roomRegions.ContainsKey(currentTerrain)
+                        || !roomRegions[currentTerrain].Any(r => r.Tiles.Contains(currentNode)))
                     {
-                        continue;
-                    }
-
-                    nodesToPathfind.Add(node);
-                }
-            }
-
-            for (int x = 0; x < nodesToPathfind.Count; x++)
-            {
-                for (int y = 0; y < nodesToPathfind.Count; y++)
-                {
-                    if (x == y) continue;
-                    MapNode[] path = AStarPathfinding.Pathfind(_map, nodesToPathfind[x].x, nodesToPathfind[x].y, nodesToPathfind[y].x, nodesToPathfind[y].y);
-
-                    if (path == null)
-                    {
-                        Debug.Log($"No path found from [{nodesToPathfind[x]}] to [{nodesToPathfind[y]}]");
+                        List<MapNode> currentRegion = GetRegionTiles(x, y);
+                        Room room = new Room(currentRegion, _map);
+                        if (roomRegions.ContainsKey(currentTerrain))
+                        {
+                            roomRegions[currentTerrain].Add(room);
+                        }
+                        else
+                        {
+                            roomRegions[currentTerrain] = new List<Room> { room };
+                        }
                     }
                 }
             }
+
+            return roomRegions;
         }
         private void GenerateRooms()
         {
@@ -177,7 +212,7 @@ namespace SCiENiDE.Core
 
             return createdRoom;
         }
-        private void RandomFillMap(int wallPercent = 44)
+        private void RandomFillMap(int wallPercent = 43)
         {
             for (int x = 0; x < _width; x++)
             {
@@ -186,6 +221,38 @@ namespace SCiENiDE.Core
                     _map[x, y].Terrain.Difficulty = Random.Range(0, 100) < wallPercent ? MoveDifficulty.NotWalkable : MoveDifficulty.Easy;
                 }
             }
+        }
+        private List<MapNode> GetRegionTiles(int x, int y)
+        {
+            MapNode startNode = _map.GetGridCell(x, y);
+            if (startNode == null)
+            {
+                return null;
+            }
+
+            Queue<MapNode> open = new Queue<MapNode>();
+            List<MapNode> closed = new List<MapNode>();
+
+            open.Enqueue(startNode);
+
+            while (open.Count > 0)
+            {
+                MapNode current = open.Dequeue();
+                closed.Add(current);
+                foreach (MapNode neighbour in current.NeighbourNodes.Where(n => n.Terrain.Difficulty == startNode.Terrain.Difficulty))
+                {
+                    if (!closed.Contains(neighbour) && !open.Contains(neighbour))
+                    {
+                        open.Enqueue(neighbour);
+                    }
+                }
+            }
+
+            return closed;
+        }
+        private bool IsInMapRange(int x, int y)
+        {
+            return x >= 0 && x < _width && y >= 0 && y < _height;
         }
     }
 }

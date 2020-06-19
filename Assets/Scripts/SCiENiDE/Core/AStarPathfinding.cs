@@ -43,6 +43,7 @@ namespace SCiENiDE.Core
             startNode.Visited = true;
             startNode.IsPath = true;
             map.TriggerOnGridCellChanged(startX, startY);
+            bool pathFound = false;
 
             while (openSet.Peek() != null)
             {
@@ -50,10 +51,11 @@ namespace SCiENiDE.Core
 
                 if (currentNode.x == endX && currentNode.y == endY)
                 {
+                    pathFound = true;
                     break;
                 }
 
-                foreach (T neighbourNode in currentNode.NeighbourNodes)
+                foreach (T neighbourNode in currentNode.NeighbourNodes.Where(x => x.Terrain.Difficulty != MoveDifficulty.NotWalkable))
                 {
                     int newCost = costSoFar[currentNode] + (int)neighbourNode.Terrain.Difficulty;
                     if (!costSoFar.ContainsKey(neighbourNode)
@@ -70,7 +72,15 @@ namespace SCiENiDE.Core
                 }
             }
 
-            return RecostructPath(map, cameFrom, startX, startY, endX, endY);
+            if (pathFound)
+            {
+                return RecostructPath(map, cameFrom, startX, startY, endX, endY);
+            }
+            else
+            {
+                Debug.Log($"Could not find valid path from [{startX}:{startY}] to [{endX}:{endY}].");
+                return null;
+            }
         }
 
         private const float MainMoveCost = 1f;

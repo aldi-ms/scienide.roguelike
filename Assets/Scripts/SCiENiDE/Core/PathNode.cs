@@ -35,7 +35,7 @@ namespace SCiENiDE.Core
                         }
 
                         T node = _gridMap.GetGridCell(_x + dX, _y + dY);
-                        if (node != null && node.Terrain.Difficulty != MoveDifficulty.NotWalkable)
+                        if (node != null) // && node.Terrain.Difficulty != MoveDifficulty.NotWalkable
                         {
                             tempNeighbourNodes.Add(node);
                         }
