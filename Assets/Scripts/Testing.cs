@@ -14,7 +14,7 @@ public class Testing : MonoBehaviour
 
     private void Start()
     {
-        MapGenerator mapGeneration = new MapGenerator(34, 18, showDebugFunc: (g, tm) => BaseGridDebug(g, tm), fillPercent: 47);
+        MapGenerator mapGeneration = new MapGenerator(64, 36, showDebugFunc: (g, tm) => BaseGridDebug(g, tm), fillPercent: 50);
         var map = mapGeneration.GenerateMap(MapType.RandomFill, 5);
     }
 
@@ -29,12 +29,12 @@ public class Testing : MonoBehaviour
                     gridArray.GetGridCell(x, y)?.ToString(),
                     null,
                     gridArray.GetWorldPosition(x, y) + new Vector3(gridArray.CellSize, gridArray.CellSize) * .5f,
-                    18,
+                    10,
                     GetColorFromNodeWalkDifficulty(gridArray.GetGridCell(x, y).Terrain.Difficulty),
                     TextAnchor.MiddleCenter);
 
-                Debug.DrawLine(gridArray.GetWorldPosition(x, y), gridArray.GetWorldPosition(x, y + 1), Color.white, 100f);
-                Debug.DrawLine(gridArray.GetWorldPosition(x, y), gridArray.GetWorldPosition(x + 1, y), Color.white, 100f);
+                //Debug.DrawLine(gridArray.GetWorldPosition(x, y), gridArray.GetWorldPosition(x, y + 1), Color.white, 100f);
+                //Debug.DrawLine(gridArray.GetWorldPosition(x, y), gridArray.GetWorldPosition(x + 1, y), Color.white, 100f);
             }
         }
 

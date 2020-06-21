@@ -12,12 +12,14 @@ namespace SCiENiDE.Core
             {
                 {
                     MapType.Rooms,
-                    (MapNode[] neigbours, NodeTerrain currentTerrain) =>
+                    (MapNode[] neighbours, NodeTerrain currentTerrain) =>
                     {
-                        if (neigbours.Length >= 6) return MoveDifficulty.Easy;
-                        if (neigbours.Length >= 4) return MoveDifficulty.Medium;
-                        if (neigbours.Length >= 2) return MoveDifficulty.Hard;
-                        if (neigbours.Length == 0) return MoveDifficulty.NotWalkable;
+                        int d = 8 - neighbours.Length;
+                        int wallCount = neighbours.Count(x => x.Terrain.Difficulty == MoveDifficulty.NotWalkable) + d;
+                        if (wallCount >= 6) return MoveDifficulty.Easy;
+                        if (wallCount >= 4) return MoveDifficulty.Medium;
+                        if (wallCount >= 2) return MoveDifficulty.Hard;
+                        if (wallCount == 0) return MoveDifficulty.NotWalkable;
                         return currentTerrain.Difficulty;
                     }
                 },
@@ -25,7 +27,6 @@ namespace SCiENiDE.Core
                     MapType.RandomFill,
                     (MapNode[] neighbours, NodeTerrain currentTerrain) =>
                     {
-                        //if (neighbours.Length < 8) return MoveDifficulty.NotWalkable;
                         int d = 8 - neighbours.Length;
                         int wallCount = neighbours.Count(x => x.Terrain.Difficulty == MoveDifficulty.NotWalkable) + d;
                         if (wallCount > 4) return MoveDifficulty.NotWalkable;

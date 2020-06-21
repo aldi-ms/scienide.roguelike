@@ -51,12 +51,12 @@ namespace SCiENiDE.Core
                 Debug.Log($"Init PRNG with seed [{_seed}].");
             }
 
-            int minRoomsRange = Mathf.RoundToInt(_totalNodeCount * .012f);
-            int maxRoomsRange = Mathf.RoundToInt(_totalNodeCount * .03f);
+            int minRoomsRange = 8;
+            int maxRoomsRange = 20;
             _rooms = new RectInt[Random.Range(minRoomsRange, maxRoomsRange)];
 
             _map = new BaseGrid<MapNode>(
-                _width, _height, 6.5f, new Vector3(-110f, -60f),
+                _width, _height, 3.5f, new Vector3(-110f, -60f),
                 (grid, x, y) =>
                 {
                     return new MapNode(grid, x, y, MoveDifficulty.NotWalkable);
@@ -82,34 +82,6 @@ namespace SCiENiDE.Core
                         for (int i = 0; i < smoothing; i++)
                             _map.RunCARuleset(mapType);
 
-                        Dictionary<MoveDifficulty, List<Room>> roomRegions = GetMapRegions();
-                        Dictionary<MoveDifficulty, List<Room>> survivingRoomRegions = new Dictionary<MoveDifficulty, List<Room>>();
-                        foreach (MoveDifficulty moveDifficultyKey in roomRegions.Keys)
-                        {
-                            if (moveDifficultyKey == MoveDifficulty.NotWalkable) continue;
-
-                            foreach (Room room in roomRegions[moveDifficultyKey])
-                            {
-                                if (room.Size < 6)
-                                {
-                                    foreach (var node in room.Tiles)
-                                    {
-                                        node.Terrain.Difficulty = MoveDifficulty.NotWalkable;
-                                    }
-                                }
-                                else
-                                {
-                                    if (!survivingRoomRegions.ContainsKey(moveDifficultyKey))
-                                    {
-                                        survivingRoomRegions[moveDifficultyKey] = new List<Room> { room };
-                                    }
-                                    else
-                                    {
-                                        survivingRoomRegions[moveDifficultyKey].Add(room);
-                                    }
-                                }
-                            }
-                        }
                     }
                     break;
 
@@ -122,8 +94,105 @@ namespace SCiENiDE.Core
                     break;
             }
 
-            // CheckNodeAvailability();
+            ProcessMapRooms();
+
             return _map;
+        }
+        private void ProcessMapRooms()
+        {
+            Dictionary<MoveDifficulty, List<Room>> roomRegions = GetMapRegions();
+            Dictionary<MoveDifficulty, List<Room>> survivingRoomRegions = new Dictionary<MoveDifficulty, List<Room>>();
+            foreach (MoveDifficulty moveDifficultyKey in roomRegions.Keys)
+            {
+                if (moveDifficultyKey == MoveDifficulty.NotWalkable) continue;
+
+                foreach (Room room in roomRegions[moveDifficultyKey])
+                {
+                    if (room.Size < 6)
+                    {
+                        foreach (var node in room.Tiles)
+                        {
+                            node.Terrain.Difficulty = MoveDifficulty.NotWalkable;
+                        }
+                    }
+                    else
+                    {
+                        if (!survivingRoomRegions.ContainsKey(moveDifficultyKey))
+                        {
+                            survivingRoomRegions[moveDifficultyKey] = new List<Room> { room };
+                        }
+                        else
+                        {
+                            survivingRoomRegions[moveDifficultyKey].Add(room);
+                        }
+                    }
+                }
+            }
+
+            _map.TriggetAllGridCellsChanged();
+
+            List<Room> flatRoomList = survivingRoomRegions
+                .Select(x => x.Value)
+                .SelectMany(x => x).ToList();
+            if (flatRoomList.Count > 1)
+            {
+                foreach (Room roomA in flatRoomList)
+                {
+                    int bestDistance = int.MaxValue;
+                    Room bestRoomA = null;
+                    Room bestRoomB = null;
+                    MapNode bestNodeA = null;
+                    MapNode bestNodeB = null;
+                    bool matchFound = false;
+                    foreach (Room roomB in flatRoomList)
+                    {
+                        if (roomA == roomB)
+                        {
+                            continue;
+                        }
+
+                        if (roomA.IsConnectedTo(roomB))
+                        {
+                            matchFound = false;
+                            break;
+                        }
+
+                        for (int wallTileA = 0; wallTileA < roomA.EdgeTiles.Count; wallTileA++)
+                        {
+                            for (int wallTileB = 0; wallTileB < roomB.EdgeTiles.Count; wallTileB++)
+                            {
+                                int distanceBetweenRooms = (int)(Mathf.Pow(roomA.EdgeTiles[wallTileA].x - roomB.EdgeTiles[wallTileB].x, 2) +
+                                    Mathf.Pow(roomA.EdgeTiles[wallTileA].y - roomB.EdgeTiles[wallTileB].y, 2));
+
+                                if (distanceBetweenRooms < bestDistance)
+                                {
+                                    matchFound = true;
+                                    bestDistance = distanceBetweenRooms;
+                                    bestNodeA = roomA.EdgeTiles[wallTileA];
+                                    bestNodeB = roomB.EdgeTiles[wallTileB];
+                                    bestRoomA = roomA;
+                                    bestRoomB = roomB;
+                                }
+                            }
+                        }
+                    }
+
+                    if (matchFound)
+                    {
+                        CreatePassage(bestRoomA, bestRoomB, bestNodeA, bestNodeB);
+                    }
+                }
+            }
+        }
+        private void CreatePassage(Room a, Room b, MapNode nodeA, MapNode nodeB)
+        {
+            Debug.Log($"Connecting room nodes [{nodeA}] => [{nodeB}]");
+            Room.ConnectRooms(a, b);
+            Debug.DrawLine(_map.GetWorldPosition(nodeA.x, nodeA.y, true), _map.GetWorldPosition(nodeB.x, nodeB.y, true), Color.red, 100);
+        }
+        private Vector3 CoordToWorldPoint(int x, int y)
+        {
+            return new Vector3(-_width / 2 + .5f + x, 2, -_height / 2 + .5f + y);
         }
         private Dictionary<MoveDifficulty, List<Room>> GetMapRegions()
         {

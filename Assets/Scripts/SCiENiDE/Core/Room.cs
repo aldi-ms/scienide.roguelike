@@ -18,6 +18,7 @@ namespace Assets.Scripts.SCiENiDE.Core
                 return _tiles;
             }
         }
+        public List<MapNode> EdgeTiles { get { return _edgeTiles; } }
         public int Size { get { return _roomSize; } }
 
 

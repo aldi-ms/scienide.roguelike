@@ -118,9 +118,15 @@ namespace SCiENiDE.Core
             x = Mathf.FloorToInt((worldPosition - _originPosition).x / _cellSize);
             y = Mathf.FloorToInt((worldPosition - _originPosition).y / _cellSize);
         }
-        public Vector3 GetWorldPosition(int x, int y)
+        public Vector3 GetWorldPosition(int x, int y, bool centeredOnTile = false)
         {
-            return new Vector3(x, y) * _cellSize + _originPosition;
+            Vector3 worldPos = new Vector3(x, y) * _cellSize + _originPosition;
+            if (centeredOnTile)
+            {
+                worldPos.x += _cellSize / 2;
+                worldPos.y += _cellSize / 2;
+            }
+            return worldPos;
         }
     }
 }
