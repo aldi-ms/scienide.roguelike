@@ -15,7 +15,7 @@ namespace SCiENiDE.Core
                     (MapNode[] neighbours, NodeTerrain currentTerrain) =>
                     {
                         int d = 8 - neighbours.Length;
-                        int wallCount = neighbours.Count(x => x.Terrain.Difficulty == MoveDifficulty.NotWalkable) + d;
+                        int wallCount = 8 - neighbours.Count(x => x.Terrain.Difficulty == MoveDifficulty.NotWalkable) + d;
                         if (wallCount >= 6) return MoveDifficulty.Easy;
                         if (wallCount >= 4) return MoveDifficulty.Medium;
                         if (wallCount >= 2) return MoveDifficulty.Hard;

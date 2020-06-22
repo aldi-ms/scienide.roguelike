@@ -1,6 +1,8 @@
 ﻿using SCiENiDE.Core;
 using System.Collections.Generic;
+using System.Diagnostics;
 using UnityEngine;
+using Debug = UnityEngine.Debug;
 
 public class Testing : MonoBehaviour
 {
@@ -14,8 +16,12 @@ public class Testing : MonoBehaviour
 
     private void Start()
     {
-        MapGenerator mapGeneration = new MapGenerator(64, 36, showDebugFunc: (g, tm) => BaseGridDebug(g, tm), fillPercent: 50);
+        Stopwatch sw = new Stopwatch();
+        sw.Start();
+        MapGenerator mapGeneration = new MapGenerator(64, 36, useRandomSeed: false, seed: 23013203, showDebugFunc: (g, tm) => BaseGridDebug(g, tm), fillPercent: 50);
         var map = mapGeneration.GenerateMap(MapType.RandomFill, 5);
+        sw.Stop();
+        Debug.Log($"Time for generating a map: [{sw.ElapsedMilliseconds}]ms.");
     }
 
     public void BaseGridDebug<T>(BaseGrid<T> gridArray, TextMesh[,] debugTextArray)

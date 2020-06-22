@@ -94,11 +94,11 @@ namespace SCiENiDE.Core
                     break;
             }
 
-            ProcessMapRooms();
+            ProcessMap();
 
             return _map;
         }
-        private void ProcessMapRooms()
+        private void ProcessMap()
         {
             Dictionary<MoveDifficulty, List<Room>> roomRegions = GetMapRegions();
             Dictionary<MoveDifficulty, List<Room>> survivingRoomRegions = new Dictionary<MoveDifficulty, List<Room>>();
@@ -134,54 +134,100 @@ namespace SCiENiDE.Core
             List<Room> flatRoomList = survivingRoomRegions
                 .Select(x => x.Value)
                 .SelectMany(x => x).ToList();
-            if (flatRoomList.Count > 1)
+            flatRoomList.Sort();
+
+            flatRoomList[0].IsMainRoom = true;
+            flatRoomList[0].IsAccesibleFromMainRoom = true;
+
+            ConnectRooms(flatRoomList);
+        }
+        private void ConnectRooms(List<Room> rooms, bool forceConnect = false)
+        {
+            if (rooms.Count <= 1)
             {
-                foreach (Room roomA in flatRoomList)
+                return;
+            }
+
+            List<Room> roomListA = new List<Room>();
+            List<Room> roomListB = new List<Room>();
+
+            if (forceConnect)
+            {
+                foreach (Room room in rooms)
                 {
-                    int bestDistance = int.MaxValue;
-                    Room bestRoomA = null;
-                    Room bestRoomB = null;
-                    MapNode bestNodeA = null;
-                    MapNode bestNodeB = null;
-                    bool matchFound = false;
-                    foreach (Room roomB in flatRoomList)
+                    if (room.IsAccesibleFromMainRoom)
                     {
-                        if (roomA == roomB)
-                        {
-                            continue;
-                        }
+                        roomListB.Add(room);
+                    }
+                    else
+                    {
+                        roomListA.Add(room);
+                    }
+                }
+            }
+            else
+            {
+                roomListA = rooms;
+                roomListB = rooms;
+            }
 
-                        if (roomA.IsConnectedTo(roomB))
-                        {
-                            matchFound = false;
-                            break;
-                        }
+            int bestDistance = int.MaxValue;
+            Room bestRoomA = null;
+            Room bestRoomB = null;
+            MapNode bestNodeA = null;
+            MapNode bestNodeB = null;
+            bool matchFound = false;
+            foreach (Room roomA in roomListA)
+            {
+                if (!forceConnect)
+                {
+                    matchFound = false;
+                    if (roomA.NeighbourRooms.Count > 0)
+                    {
+                        continue;
+                    }
+                }
+                foreach (Room roomB in roomListB)
+                {
+                    if (roomA == roomB || roomA.IsConnectedTo(roomB))
+                    {
+                        continue;
+                    }
 
-                        for (int wallTileA = 0; wallTileA < roomA.EdgeTiles.Count; wallTileA++)
+                    for (int wallTileA = 0; wallTileA < roomA.EdgeTiles.Count; wallTileA++)
+                    {
+                        for (int wallTileB = 0; wallTileB < roomB.EdgeTiles.Count; wallTileB++)
                         {
-                            for (int wallTileB = 0; wallTileB < roomB.EdgeTiles.Count; wallTileB++)
+                            int distanceBetweenRooms = (int)(Mathf.Pow(roomA.EdgeTiles[wallTileA].x - roomB.EdgeTiles[wallTileB].x, 2) +
+                                Mathf.Pow(roomA.EdgeTiles[wallTileA].y - roomB.EdgeTiles[wallTileB].y, 2));
+
+                            if (distanceBetweenRooms < bestDistance || !matchFound)
                             {
-                                int distanceBetweenRooms = (int)(Mathf.Pow(roomA.EdgeTiles[wallTileA].x - roomB.EdgeTiles[wallTileB].x, 2) +
-                                    Mathf.Pow(roomA.EdgeTiles[wallTileA].y - roomB.EdgeTiles[wallTileB].y, 2));
-
-                                if (distanceBetweenRooms < bestDistance)
-                                {
-                                    matchFound = true;
-                                    bestDistance = distanceBetweenRooms;
-                                    bestNodeA = roomA.EdgeTiles[wallTileA];
-                                    bestNodeB = roomB.EdgeTiles[wallTileB];
-                                    bestRoomA = roomA;
-                                    bestRoomB = roomB;
-                                }
+                                matchFound = true;
+                                bestDistance = distanceBetweenRooms;
+                                bestNodeA = roomA.EdgeTiles[wallTileA];
+                                bestNodeB = roomB.EdgeTiles[wallTileB];
+                                bestRoomA = roomA;
+                                bestRoomB = roomB;
                             }
                         }
                     }
-
-                    if (matchFound)
-                    {
-                        CreatePassage(bestRoomA, bestRoomB, bestNodeA, bestNodeB);
-                    }
                 }
+
+                if (matchFound && !forceConnect)
+                {
+                    CreatePassage(bestRoomA, bestRoomB, bestNodeA, bestNodeB);
+                }
+            }
+
+            if (matchFound && forceConnect)
+            {
+                CreatePassage(bestRoomA, bestRoomB, bestNodeA, bestNodeB);
+                ConnectRooms(rooms, true);
+            }
+            if (!forceConnect)
+            {
+                ConnectRooms(rooms, true);
             }
         }
         private void CreatePassage(Room a, Room b, MapNode nodeA, MapNode nodeB)

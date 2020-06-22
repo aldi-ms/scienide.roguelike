@@ -1,15 +1,18 @@
 ﻿using SCiENiDE.Core;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
 namespace Assets.Scripts.SCiENiDE.Core
 {
-    public class Room
+    public class Room : IComparable<Room>
     {
         private List<MapNode> _tiles;
         private List<MapNode> _edgeTiles;
         private int _roomSize;
         private List<Room> _neighbourRooms;
+        public bool IsAccesibleFromMainRoom { get; set; }
+        public bool IsMainRoom { get; set; }
 
         public List<MapNode> Tiles
         {
@@ -20,7 +23,13 @@ namespace Assets.Scripts.SCiENiDE.Core
         }
         public List<MapNode> EdgeTiles { get { return _edgeTiles; } }
         public int Size { get { return _roomSize; } }
-
+        public List<Room> NeighbourRooms
+        {
+            get
+            {
+                return _neighbourRooms;
+            }
+        }
 
         public Room(List<MapNode> roomTiles, BaseGrid<MapNode> map)
         {
@@ -42,11 +51,35 @@ namespace Assets.Scripts.SCiENiDE.Core
         {
             return _neighbourRooms.Contains(x);
         }
-
         public static void ConnectRooms(Room a, Room b)
         {
+            if (a.IsAccesibleFromMainRoom)
+            {
+                b.SetAccessibleFromMainRoom();
+            }
+            else if (b.IsAccesibleFromMainRoom)
+            {
+                a.SetAccessibleFromMainRoom();
+            }
+
             a._neighbourRooms.Add(b);
             b._neighbourRooms.Add(a);
+        }
+        public void SetAccessibleFromMainRoom()
+        {
+            if (!IsAccesibleFromMainRoom)
+            {
+                IsAccesibleFromMainRoom = true;
+                foreach (Room room in _neighbourRooms)
+                {
+                    room.SetAccessibleFromMainRoom();
+                }
+            }
+        }
+
+        public int CompareTo(Room x)
+        {
+            return x.Size.CompareTo(this.Size);
         }
     }
 }
