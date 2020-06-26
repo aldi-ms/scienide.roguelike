@@ -35,6 +35,13 @@ namespace SCiENiDE.Core
             return worldPosition;
         }
 
+        public static int DiagonalDistance(int startX, int startY, int endX, int endY)
+        {
+            int dx = endX - startX;
+            int dy = endY - startY;
+            return Mathf.Max(Mathf.Abs(dx), Mathf.Abs(dy));
+        }
+
         //public static void InitializePathNodeNeighbours(BaseGrid<PathNode> map)
         //{
         //    for (int x = 0; x < map.GetWidth(); x++)

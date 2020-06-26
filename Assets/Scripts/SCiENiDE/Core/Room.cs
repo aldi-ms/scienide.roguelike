@@ -14,22 +14,10 @@ namespace Assets.Scripts.SCiENiDE.Core
         public bool IsAccesibleFromMainRoom { get; set; }
         public bool IsMainRoom { get; set; }
 
-        public List<MapNode> Tiles
-        {
-            get
-            {
-                return _tiles;
-            }
-        }
+        public List<MapNode> Tiles { get { return _tiles; } }
         public List<MapNode> EdgeTiles { get { return _edgeTiles; } }
         public int Size { get { return _roomSize; } }
-        public List<Room> NeighbourRooms
-        {
-            get
-            {
-                return _neighbourRooms;
-            }
-        }
+        public List<Room> NeighbourRooms { get { return _neighbourRooms; } }
 
         public Room(List<MapNode> roomTiles, BaseGrid<MapNode> map)
         {

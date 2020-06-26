@@ -13,13 +13,18 @@ public class Testing : MonoBehaviour
             MoveDifficulty.NotWalkable,
             MoveDifficulty.Easy
         };
+    private List<int> CustomSeeds = new List<int> {
+        23013203,
+        122014906,
+    };
 
     private void Start()
     {
         Stopwatch sw = new Stopwatch();
         sw.Start();
-        MapGenerator mapGeneration = new MapGenerator(64, 36, useRandomSeed: false, seed: 23013203, showDebugFunc: (g, tm) => BaseGridDebug(g, tm), fillPercent: 50);
+        MapGenerator mapGeneration = new MapGenerator(64, 36, showDebugFunc: (g, tm) => BaseGridDebug(g, tm), fillPercent: 50);
         var map = mapGeneration.GenerateMap(MapType.RandomFill, 5);
+
         sw.Stop();
         Debug.Log($"Time for generating a map: [{sw.ElapsedMilliseconds}]ms.");
     }
@@ -35,7 +40,7 @@ public class Testing : MonoBehaviour
                     gridArray.GetGridCell(x, y)?.ToString(),
                     null,
                     gridArray.GetWorldPosition(x, y) + new Vector3(gridArray.CellSize, gridArray.CellSize) * .5f,
-                    10,
+                    12,
                     GetColorFromNodeWalkDifficulty(gridArray.GetGridCell(x, y).Terrain.Difficulty),
                     TextAnchor.MiddleCenter);
 
@@ -81,7 +86,7 @@ public class Testing : MonoBehaviour
             case MoveDifficulty.Hard:
                 return Color.red;
             case MoveDifficulty.NotWalkable:
-                return Color.blue;
+                return Color.gray;
             default:
                 return Color.white;
         }

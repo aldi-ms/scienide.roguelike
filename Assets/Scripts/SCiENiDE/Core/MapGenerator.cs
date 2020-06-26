@@ -234,7 +234,24 @@ namespace SCiENiDE.Core
         {
             Debug.Log($"Connecting room nodes [{nodeA}] => [{nodeB}]");
             Room.ConnectRooms(a, b);
-            Debug.DrawLine(_map.GetWorldPosition(nodeA.x, nodeA.y, true), _map.GetWorldPosition(nodeB.x, nodeB.y, true), Color.red, 100);
+
+            Vector3 startVector = _map.GetWorldPosition(nodeA.x, nodeA.y, true);
+            Vector3 endVector = _map.GetWorldPosition(nodeB.x, nodeB.y, true);
+
+            List<MapNode> passageNodes = new List<MapNode>();
+            int diagonalDistance = Utils.DiagonalDistance(nodeA.x, nodeA.y, nodeB.x, nodeB.y);
+            for (int i = 0; i <= diagonalDistance; i++)
+            {
+                float t = diagonalDistance == 0 ? 0f : (float)i / diagonalDistance;
+                _map.WorldPositionToGridPosition(Vector3.Lerp(startVector, endVector, t), out int nodeX, out int nodeY);
+                passageNodes.Add(_map[nodeX, nodeY]);
+            }
+
+            foreach (var n in passageNodes)
+            {
+                n.Terrain.Difficulty = MoveDifficulty.Easy;
+                _map.TriggerOnGridCellChanged(n.x, n.y);
+            }
         }
         private Vector3 CoordToWorldPoint(int x, int y)
         {

@@ -77,7 +77,7 @@ namespace SCiENiDE.Core
         }
         public void SetGridCell(Vector3 worldPosition, T value)
         {
-            GetXY(worldPosition, out int x, out int y);
+            WorldPositionToGridPosition(worldPosition, out int x, out int y);
             SetGridCell(x, y, value);
         }
 
@@ -92,7 +92,7 @@ namespace SCiENiDE.Core
         }
         public T GetGridCell(Vector3 worldPosition)
         {
-            GetXY(worldPosition, out int x, out int y);
+            WorldPositionToGridPosition(worldPosition, out int x, out int y);
             return GetGridCell(x, y);
         }
 
@@ -106,17 +106,9 @@ namespace SCiENiDE.Core
                 }
             }
         }
-
-
         public void TriggerOnGridCellChanged(int x, int y)
         {
             OnGridCellChanged?.Invoke(this, new OnGridCellChangedEventArgs { x = x, y = y });
-        }
-
-        private void GetXY(Vector3 worldPosition, out int x, out int y)
-        {
-            x = Mathf.FloorToInt((worldPosition - _originPosition).x / _cellSize);
-            y = Mathf.FloorToInt((worldPosition - _originPosition).y / _cellSize);
         }
         public Vector3 GetWorldPosition(int x, int y, bool centeredOnTile = false)
         {
@@ -127,6 +119,11 @@ namespace SCiENiDE.Core
                 worldPos.y += _cellSize / 2;
             }
             return worldPos;
+        }
+        public void WorldPositionToGridPosition(Vector3 worldPosition, out int x, out int y)
+        {
+            x = Mathf.FloorToInt((worldPosition - _originPosition).x / _cellSize);
+            y = Mathf.FloorToInt((worldPosition - _originPosition).y / _cellSize);
         }
     }
 }
