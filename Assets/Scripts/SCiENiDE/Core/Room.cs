@@ -7,28 +7,28 @@ namespace Assets.Scripts.SCiENiDE.Core
 {
     public class Room : IComparable<Room>
     {
-        private List<MapNode> _tiles;
-        private List<MapNode> _edgeTiles;
+        private List<IPathNode> _tiles;
+        private List<IPathNode> _edgeTiles;
         private int _roomSize;
         private List<Room> _neighbourRooms;
         public bool IsAccesibleFromMainRoom { get; set; }
         public bool IsMainRoom { get; set; }
 
-        public List<MapNode> Tiles { get { return _tiles; } }
-        public List<MapNode> EdgeTiles { get { return _edgeTiles; } }
+        public List<IPathNode> Tiles { get { return _tiles; } }
+        public List<IPathNode> EdgeTiles { get { return _edgeTiles; } }
         public int Size { get { return _roomSize; } }
         public List<Room> NeighbourRooms { get { return _neighbourRooms; } }
 
-        public Room(List<MapNode> roomTiles, BaseGrid<MapNode> map)
+        public Room(List<IPathNode> roomTiles, BaseGrid<IPathNode> map)
         {
             _tiles = roomTiles;
             _roomSize = _tiles.Count;
-            _edgeTiles = new List<MapNode>();
+            _edgeTiles = new List<IPathNode>();
             _neighbourRooms = new List<Room>();
 
-            foreach (MapNode tile in roomTiles)
+            foreach (var tile in roomTiles)
             {
-                if (tile.NeighbourNodes.Any(x => x.Terrain.Difficulty == MoveDifficulty.NotWalkable))
+                if (map.GetNeighbourNodesCached(tile.Coords).Any(x => x.Terrain.Difficulty == MoveDifficulty.NotWalkable))
                 {
                     _edgeTiles.Add(tile);
                 }

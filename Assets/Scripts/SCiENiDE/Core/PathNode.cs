@@ -1,72 +1,60 @@
-﻿using System.Collections.Generic;
+﻿using UnityEngine;
 
 namespace SCiENiDE.Core
 {
-    public class PathNode<T> : IPathNode<T> where T: IPathNode<T>
+    public struct PathNode : IPathNode
     {
         private int _x;
         private int _y;
         private NodeTerrain _terrain;
-        private BaseGrid<T> _gridMap;
 
-        public PathNode(BaseGrid<T> gridMap, int x, int y, MoveDifficulty moveDifficulty = MoveDifficulty.Medium)
+        public PathNode(int x, int y, MoveDifficulty moveDifficulty = MoveDifficulty.Medium)
         {
             _x = x;
             _y = y;
-            _gridMap = gridMap;
+            Coords = new Vector2(x, y);
             _terrain = new NodeTerrain
             {
                 Difficulty = moveDifficulty
             };
+
+            Visited = false;
+            IsPath = false;
+            fScore = 0;
         }
 
-        public T[] NeighbourNodes
-        {
-            get
-            {
-                List<T> tempNeighbourNodes = new List<T>();
-                for (int dX = -1; dX <= 1; dX++)
-                {
-                    for (int dY = -1; dY <= 1; dY++)
-                    {
-                        if (dX == 0 && dY == 0)
-                        {
-                            continue;
-                        }
-
-                        T node = _gridMap.GetGridCell(_x + dX, _y + dY);
-                        if (node != null) // && node.Terrain.Difficulty != MoveDifficulty.NotWalkable
-                        {
-                            tempNeighbourNodes.Add(node);
-                        }
-                    }
-                }
-
-                return tempNeighbourNodes.ToArray();
-            }
-        }
         public NodeTerrain Terrain
         {
             get { return _terrain; }
             set { _terrain = value; }
         }
+
         public bool Visited { get; set; }
+
         public bool IsPath { get; set; }
-        public int x
+
+        public int X
         {
             get { return _x; }
-            protected set { _x = value; }
         }
-        public int y
+
+        public int Y
         {
             get { return _y; }
-            protected set { _y = value; }
         }
+
         public float fScore { get; set; }
+
+        public Vector2 Coords { get; private set; }
+
+        public string ToLongString()
+        {
+            return $"{_x}:{_y}{(Visited ? "*" : string.Empty)}\r\n{(int)_terrain.Difficulty}/{fScore.ToString("F1")}";
+        }
 
         public override string ToString()
         {
-            return $"{_x}:{_y}{(Visited ? "*" : string.Empty)}\r\n{(int)_terrain.Difficulty}/{fScore.ToString("F1")}";
+            return $"{_x}:{_y}";
         }
     }
 }

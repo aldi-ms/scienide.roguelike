@@ -22,57 +22,68 @@ public class Testing : MonoBehaviour
     {
         Stopwatch sw = new Stopwatch();
         sw.Start();
-        MapGenerator mapGeneration = new MapGenerator(64, 36, showDebugFunc: (g, tm) => BaseGridDebug(g, tm), fillPercent: 50);
-        var map = mapGeneration.GenerateMap(MapType.RandomFill, 5);
 
-        sw.Stop();
-        Debug.Log($"Time for generating a map: [{sw.ElapsedMilliseconds}]ms.");
-    }
+        MapGenerator generator = new MapGenerator(
+            width: 64,
+            height: 36,
+            debugCallback: (g, tm) => BaseGridDebug(g, tm), fillPercent: 50);
 
-    public void BaseGridDebug<T>(BaseGrid<T> gridArray, TextMesh[,] debugTextArray)
-        where T : IPathNode<T>
-    {
-        for (int x = 0; x < gridArray.Width; x++)
+        generator.Map.OnGridCellChanged += (object sender, BaseGrid<IPathNode>.OnGridCellChangedEventArgs args) =>
         {
-            for (int y = 0; y < gridArray.Height; y++)
+            if (sender is BaseGrid<IPathNode> map)
             {
-                debugTextArray[x, y] = Utils.CreateWorldText(
-                    gridArray.GetGridCell(x, y)?.ToString(),
-                    null,
-                    gridArray.GetWorldPosition(x, y) + new Vector3(gridArray.CellSize, gridArray.CellSize) * .5f,
-                    12,
-                    GetColorFromNodeWalkDifficulty(gridArray.GetGridCell(x, y).Terrain.Difficulty),
-                    TextAnchor.MiddleCenter);
-
-                //Debug.DrawLine(gridArray.GetWorldPosition(x, y), gridArray.GetWorldPosition(x, y + 1), Color.white, 100f);
-                //Debug.DrawLine(gridArray.GetWorldPosition(x, y), gridArray.GetWorldPosition(x + 1, y), Color.white, 100f);
-            }
-        }
-
-        Debug.DrawLine(gridArray.GetWorldPosition(0, gridArray.Height), gridArray.GetWorldPosition(gridArray.Width, gridArray.Height), Color.white, 100f);
-        Debug.DrawLine(gridArray.GetWorldPosition(gridArray.Width, 0), gridArray.GetWorldPosition(gridArray.Width, gridArray.Height), Color.white, 100f);
-
-        gridArray.OnGridCellChanged += (object sender, BaseGrid<T>.OnGridCellChangedEventArgs args) =>
-        {
-            T gridCell = gridArray.GetGridCell(args.x, args.y);
-            debugTextArray[args.x, args.y].text = gridCell?.ToString();
-            if (gridCell != null)
-            {
-                if (gridCell.IsPath)
+                var gridCell = map.GetGridCell(args.x, args.y);
+                if (args.DebugTextMeshes == null)
                 {
-                    debugTextArray[args.x, args.y].color = Color.cyan;
+                    return;
                 }
-                else if (gridCell.Visited)
+
+                var debugTextArray = args.DebugTextMeshes;
+                debugTextArray[args.x, args.y].text = gridCell?.ToString();
+                if (gridCell != null)
                 {
-                    debugTextArray[args.x, args.y].color = Color.grey;
-                }
-                else
-                {
-                    debugTextArray[args.x, args.y].color = GetColorFromNodeWalkDifficulty(gridCell.Terrain.Difficulty);
+                    if (gridCell.IsPath)
+                    {
+                        debugTextArray[args.x, args.y].color = Color.cyan;
+                    }
+                    else if (gridCell.Visited)
+                    {
+                        debugTextArray[args.x, args.y].color = Color.grey;
+                    }
+                    else
+                    {
+                        debugTextArray[args.x, args.y].color = GetColorFromNodeWalkDifficulty(gridCell.Terrain.Difficulty);
+                    }
                 }
             }
         };
+
+        generator.GenerateMap(MapType.RandomFill, 5);
+        
+        sw.Stop();
+        Debug.Log($"Time spent generating map: [{sw.ElapsedMilliseconds}]ms.");
     }
+
+    public void BaseGridDebug(BaseGrid<IPathNode> map, TextMesh[,] debugTextArray)
+    {
+        for (int x = 0; x < map.Width; x++)
+        {
+            for (int y = 0; y < map.Height; y++)
+            {
+                debugTextArray[x, y] = Utils.CreateWorldText(
+                    $"{x}:{y}",
+                    null,
+                    map.GetWorldPosition(x, y) + new Vector3(map.CellSize, map.CellSize) * .5f,
+                    12,
+                    GetColorFromNodeWalkDifficulty(map.GetGridCell(x, y).Terrain.Difficulty),
+                    TextAnchor.MiddleCenter);
+            }
+        }
+
+        Debug.DrawLine(map.GetWorldPosition(0, map.Height), map.GetWorldPosition(map.Width, map.Height), Color.white, 100f);
+        Debug.DrawLine(map.GetWorldPosition(map.Width, 0), map.GetWorldPosition(map.Width, map.Height), Color.white, 100f);
+    }
+
     private Color GetColorFromNodeWalkDifficulty(MoveDifficulty difficulty)
     {
         switch (difficulty)
@@ -115,7 +126,7 @@ public class Testing : MonoBehaviour
 
         gridArray.OnGridCellChanged += (object sender, BaseGrid<T>.OnGridCellChangedEventArgs args) =>
         {
-            debugTextArray[args.x, args.y].text = gridArray.GetGridCell(args.x, args.y)?.ToString();
+            args.DebugTextMeshes[args.x, args.y].text = gridArray.GetGridCell(args.x, args.y)?.ToString();
         };
     }
 }

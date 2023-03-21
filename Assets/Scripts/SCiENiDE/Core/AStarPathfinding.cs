@@ -8,22 +8,22 @@ namespace SCiENiDE.Core
     {
         private const float p = 1f / 1000f;
 
-        public static T[] Pathfind<T>(BaseGrid<T> map, int startX, int startY, int endX, int endY) where T : class, IPathNode<T>
+        public static IPathNode[] Pathfind(BaseGrid<IPathNode> map, int startX, int startY, int endX, int endY)
         {
-            T endNode = map.GetGridCell(endX, endY);
+            var endNode = map.GetGridCell(endX, endY);
             if (endNode == null || endNode.Terrain.Difficulty == MoveDifficulty.NotWalkable)
             {
                 return null;
             }
 
-            Dictionary<T, T> cameFrom = new Dictionary<T, T>();
-            Dictionary<T, int> costSoFar = new Dictionary<T, int>();
-            PriorityQueue<T> openSet = new PriorityQueue<T>(
-                Comparer<T>.Create((x, y) =>
+            var cameFrom = new Dictionary<IPathNode, IPathNode>();
+            var costSoFar = new Dictionary<IPathNode, int>();
+            var openSet = new PriorityQueue<IPathNode>(
+                Comparer<IPathNode>.Create((x, y) =>
                 {
-                    if (x == null && y == null) return 0;
-                    if (x == null && y != null) return 1;
-                    if (x != null && y == null) return -1;
+                    //if (x == null && y == null) return 0;
+                    //if (x == null && y != null) return 1;
+                    //if (x != null && y == null) return -1;
 
                     return (x.fScore != y.fScore)
                         ? x.fScore.CompareTo(y.fScore)
@@ -31,7 +31,7 @@ namespace SCiENiDE.Core
                 }),
                 map.Width * map.Height);
 
-            T startNode = map.GetGridCell(startX, startY);
+            var startNode = map.GetGridCell(startX, startY);
             if (startNode == null)
             {
                 return null;
@@ -47,27 +47,28 @@ namespace SCiENiDE.Core
 
             while (openSet.Peek() != null)
             {
-                T currentNode = openSet.Pop();
+                var currentNode = openSet.Pop();
 
-                if (currentNode.x == endX && currentNode.y == endY)
+                if (currentNode.X == endX && currentNode.Y == endY)
                 {
                     pathFound = true;
                     break;
                 }
 
-                foreach (T neighbourNode in currentNode.NeighbourNodes.Where(x => x.Terrain.Difficulty != MoveDifficulty.NotWalkable))
+                var walkableNeighbourNodes = map.GetNeighbourNodesCached(currentNode.Coords).Where(x => x.Terrain.Difficulty != MoveDifficulty.NotWalkable);
+                foreach (var node in walkableNeighbourNodes)
                 {
-                    int newCost = costSoFar[currentNode] + (int)neighbourNode.Terrain.Difficulty;
-                    if (!costSoFar.ContainsKey(neighbourNode)
-                        || newCost < costSoFar[neighbourNode])
+                    int newCost = costSoFar[currentNode] + (int)node.Terrain.Difficulty;
+                    if (!costSoFar.ContainsKey(node)
+                        || newCost < costSoFar[node])
                     {
-                        costSoFar[neighbourNode] = newCost;
-                        float hScore = Heuristic(neighbourNode.x, neighbourNode.y, endX, endY) * (1f + p);
-                        neighbourNode.fScore = newCost + hScore;
-                        openSet.Push(neighbourNode);
-                        cameFrom[neighbourNode] = currentNode;
-                        neighbourNode.Visited = true;
-                        map.TriggerOnGridCellChanged(neighbourNode.x, neighbourNode.y);
+                        costSoFar[node] = newCost;
+                        float hScore = Heuristic(node.X, node.Y, endX, endY) * (1f + p);
+                        node.fScore = newCost + hScore;
+                        openSet.Push(node);
+                        cameFrom[node] = currentNode;
+                        node.Visited = true;
+                        map.TriggerOnGridCellChanged(node.X, node.Y);
                     }
                 }
             }
@@ -99,18 +100,18 @@ namespace SCiENiDE.Core
             /* Diagonal distance */
             return MainMoveCost * (dx + dy) + (DiagonalMoveCost - 2 * MainMoveCost) * Mathf.Min(dx, dy);
         }
-        private static T[] RecostructPath<T>(BaseGrid<T> map, Dictionary<T, T> cameFrom, int startX, int startY, int endX, int endY) where T : class, IPathNode<T>
+        private static IPathNode[] RecostructPath(BaseGrid<IPathNode> map, Dictionary<IPathNode, IPathNode> cameFrom, int startX, int startY, int endX, int endY)
         {
-            T current = map.GetGridCell(endX, endY);
-            T startNode = map.GetGridCell(startX, startY);
+            var current = map.GetGridCell(endX, endY);
+            var startNode = map.GetGridCell(startX, startY);
 
-            List<T> path = new List<T>();
+            var path = new List<IPathNode>();
 
             while (current != startNode)
             {
                 path.Add(current);
                 current.IsPath = true;
-                map.TriggerOnGridCellChanged(current.x, current.y);
+                map.TriggerOnGridCellChanged(current.X, current.Y);
                 current = cameFrom[current];
             }
 

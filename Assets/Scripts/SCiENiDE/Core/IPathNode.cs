@@ -1,16 +1,18 @@
-﻿namespace SCiENiDE.Core
+﻿using UnityEngine;
+
+namespace SCiENiDE.Core
 {
-    public interface IPathNode<out T> where T : IPathNode<T>
+    public interface IPathNode
     {
         bool IsPath { get; set; }
         bool Visited { get; set; }
-        T[] NeighbourNodes { get; }
         NodeTerrain Terrain { get; set; }
 
-        int x { get; }
-        int y { get; }
+        int X { get; }
+        int Y { get; }
+        Vector2 Coords { get; }
         float fScore { get; set; }
 
-        string ToString();
+        string ToLongString();
     }
 }

@@ -18,21 +18,19 @@ namespace SCiENiDE.Core
         private int _fillPercent;
 
         private RectInt[] _rooms;
-        private Action<BaseGrid<MapNode>, TextMesh[,]> _debug;
-        private BaseGrid<MapNode> _map;
+        private BaseGrid<IPathNode> _map;
 
         public MapGenerator(
             int width,
             int height,
             bool useRandomSeed = true,
             int seed = -1,
-            Action<BaseGrid<MapNode>, TextMesh[,]> showDebugFunc = null,
+            Action<BaseGrid<IPathNode>, TextMesh[,]> debugCallback = null,
             int fillPercent = 43)
         {
             _width = width;
             _height = height;
             _totalNodeCount = _width * _height;
-            _debug = showDebugFunc;
             _seed = seed;
             _useRandomSeed = useRandomSeed;
             _fillPercent = fillPercent;
@@ -42,7 +40,7 @@ namespace SCiENiDE.Core
                 _seed = Environment.TickCount;
                 Random.InitState(_seed);
 
-                Debug.Log($"Init PRNG with new seed [{_seed}].");
+                Debug.Log($"Init PRNG with random seed [{_seed}].");
             }
             else
             {
@@ -55,16 +53,22 @@ namespace SCiENiDE.Core
             int maxRoomsRange = 20;
             _rooms = new RectInt[Random.Range(minRoomsRange, maxRoomsRange)];
 
-            _map = new BaseGrid<MapNode>(
+            _map = new BaseGrid<IPathNode>(
                 _width, _height, 3.5f, new Vector3(-110f, -60f),
-                (grid, x, y) =>
+                (x, y) =>
                 {
-                    return new MapNode(grid, x, y, MoveDifficulty.NotWalkable);
+                    return new PathNode(x, y, MoveDifficulty.NotWalkable);
                 },
-                _debug);
+                debugCallback);
         }
 
-        public BaseGrid<MapNode> GenerateMap(MapType mapType, int smoothing)
+        public BaseGrid<IPathNode> Map
+        {
+            get { return _map; }
+            private set { _map = value; }
+        }
+
+        public BaseGrid<IPathNode> GenerateMap(MapType mapType, int smoothing)
         {
             switch (mapType)
             {
@@ -87,6 +91,7 @@ namespace SCiENiDE.Core
 
                 case MapType.SolidFill:
                     {
+                        Debug.LogWarning($"GenerateMap for {mapType.ToString()} is not defined!");
                     }
                     break;
 
@@ -174,8 +179,8 @@ namespace SCiENiDE.Core
             int bestDistance = int.MaxValue;
             Room bestRoomA = null;
             Room bestRoomB = null;
-            MapNode bestNodeA = null;
-            MapNode bestNodeB = null;
+            IPathNode bestNodeA = null;
+            IPathNode bestNodeB = null;
             bool matchFound = false;
             foreach (Room roomA in roomListA)
             {
@@ -198,8 +203,8 @@ namespace SCiENiDE.Core
                     {
                         for (int wallTileB = 0; wallTileB < roomB.EdgeTiles.Count; wallTileB++)
                         {
-                            int distanceBetweenRooms = (int)(Mathf.Pow(roomA.EdgeTiles[wallTileA].x - roomB.EdgeTiles[wallTileB].x, 2) +
-                                Mathf.Pow(roomA.EdgeTiles[wallTileA].y - roomB.EdgeTiles[wallTileB].y, 2));
+                            int distanceBetweenRooms = (int)(Mathf.Pow(roomA.EdgeTiles[wallTileA].X - roomB.EdgeTiles[wallTileB].X, 2) +
+                                Mathf.Pow(roomA.EdgeTiles[wallTileA].Y - roomB.EdgeTiles[wallTileB].Y, 2));
 
                             if (distanceBetweenRooms < bestDistance || !matchFound)
                             {
@@ -230,16 +235,16 @@ namespace SCiENiDE.Core
                 ConnectRooms(rooms, true);
             }
         }
-        private void CreatePassage(Room a, Room b, MapNode nodeA, MapNode nodeB)
+        private void CreatePassage(Room a, Room b, IPathNode nodeA, IPathNode nodeB)
         {
             Debug.Log($"Connecting room nodes [{nodeA}] => [{nodeB}]");
             Room.ConnectRooms(a, b);
 
-            Vector3 startVector = _map.GetWorldPosition(nodeA.x, nodeA.y, true);
-            Vector3 endVector = _map.GetWorldPosition(nodeB.x, nodeB.y, true);
+            Vector3 startVector = _map.GetWorldPosition(nodeA.X, nodeA.Y, true);
+            Vector3 endVector = _map.GetWorldPosition(nodeB.X, nodeB.Y, true);
 
-            List<MapNode> passageNodes = new List<MapNode>();
-            int diagonalDistance = Utils.DiagonalDistance(nodeA.x, nodeA.y, nodeB.x, nodeB.y);
+            var passageNodes = new List<IPathNode>();
+            int diagonalDistance = Utils.DiagonalDistance(nodeA.X, nodeA.Y, nodeB.X, nodeB.Y);
             for (int i = 0; i <= diagonalDistance; i++)
             {
                 float t = diagonalDistance == 0 ? 0f : (float)i / diagonalDistance;
@@ -250,7 +255,7 @@ namespace SCiENiDE.Core
             foreach (var n in passageNodes)
             {
                 n.Terrain.Difficulty = MoveDifficulty.Easy;
-                _map.TriggerOnGridCellChanged(n.x, n.y);
+                _map.TriggerOnGridCellChanged(n.X, n.Y);
             }
         }
         private Vector3 CoordToWorldPoint(int x, int y)
@@ -264,7 +269,7 @@ namespace SCiENiDE.Core
             {
                 for (int y = 0; y < _height; y++)
                 {
-                    MapNode currentNode = _map.GetGridCell(x, y);
+                    var currentNode = _map.GetGridCell(x, y);
                     if (currentNode == null) continue;
 
                     MoveDifficulty currentTerrain = currentNode.Terrain.Difficulty;
@@ -272,7 +277,7 @@ namespace SCiENiDE.Core
                     if (!roomRegions.ContainsKey(currentTerrain)
                         || !roomRegions[currentTerrain].Any(r => r.Tiles.Contains(currentNode)))
                     {
-                        List<MapNode> currentRegion = GetRegionTiles(x, y);
+                        var currentRegion = GetRegionTiles(x, y, _map);
                         Room room = new Room(currentRegion, _map);
                         if (roomRegions.ContainsKey(currentTerrain))
                         {
@@ -354,24 +359,27 @@ namespace SCiENiDE.Core
                 }
             }
         }
-        private List<MapNode> GetRegionTiles(int x, int y)
+        private List<IPathNode> GetRegionTiles(int x, int y, BaseGrid<IPathNode> map)
         {
-            MapNode startNode = _map.GetGridCell(x, y);
+            var startNode = _map.GetGridCell(x, y);
             if (startNode == null)
             {
                 return null;
             }
 
-            Queue<MapNode> open = new Queue<MapNode>();
-            List<MapNode> closed = new List<MapNode>();
+            var open = new Queue<IPathNode>();
+            var closed = new List<IPathNode>();
 
             open.Enqueue(startNode);
 
             while (open.Count > 0)
             {
-                MapNode current = open.Dequeue();
+                var current = open.Dequeue();
                 closed.Add(current);
-                foreach (MapNode neighbour in current.NeighbourNodes.Where(n => n.Terrain.Difficulty == startNode.Terrain.Difficulty))
+
+                var neigbourNodesPerDifficulty = map.GetNeighbourNodesCached(current.Coords)
+                    .Where(n => n.Terrain.Difficulty == startNode.Terrain.Difficulty);
+                foreach (var neighbour in neigbourNodesPerDifficulty)
                 {
                     if (!closed.Contains(neighbour) && !open.Contains(neighbour))
                     {
@@ -382,7 +390,7 @@ namespace SCiENiDE.Core
 
             return closed;
         }
-        private bool IsInMapRange(int x, int y)
+        private bool IsValidMapBounds(int x, int y)
         {
             return x >= 0 && x < _width && y >= 0 && y < _height;
         }
