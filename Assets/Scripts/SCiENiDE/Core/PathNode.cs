@@ -2,7 +2,7 @@
 
 namespace SCiENiDE.Core
 {
-    public struct PathNode : IPathNode
+    public class PathNode : IPathNode
     {
         private int _x;
         private int _y;

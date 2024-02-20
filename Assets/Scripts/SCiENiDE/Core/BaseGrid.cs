@@ -11,16 +11,14 @@ namespace SCiENiDE.Core
         {
             public int x;
             public int y;
-            public TextMesh[,] DebugTextMeshes;
+            public Component[,] CellMap;
         }
 
-        private const bool ShowDebug = true;
-
-        private int _width;
-        private int _height;
-        private float _cellSize;
-        private T[,] _gridArray;
-        private TextMesh[,] _debugTextArray;
+        private readonly int _width;
+        private readonly int _height;
+        private readonly float _cellSize;
+        private readonly T[,] _gridArray;
+        private readonly Component[,] _debugTextArray;
         private Vector3 _originPosition;
         private Dictionary<Vector2, IEnumerable<T>> _neighbourCache;
 
@@ -30,7 +28,7 @@ namespace SCiENiDE.Core
             float cellSize, 
             Vector3 originPosition, 
             Func<int, int, T> createGridCellFunc,
-            Action<BaseGrid<T>, TextMesh[,]> debugCallback = null)
+            Action<BaseGrid<T>, Component[,]> debugCallback = null)
         {
             _width = width;
             _height = height;
@@ -39,7 +37,7 @@ namespace SCiENiDE.Core
             _neighbourCache= new Dictionary<Vector2, IEnumerable<T>>();
 
             _gridArray = new T[_width, _height];
-            _debugTextArray = new TextMesh[_width, _height];
+            _debugTextArray = new Component[_width, _height];
 
             for (int x = 0; x < _gridArray.GetLength(0); x++)
             {
@@ -70,7 +68,7 @@ namespace SCiENiDE.Core
                         continue;
                     }
 
-                    T node = GetGridCell((int)nodeCoordinates.x + dX, (int)nodeCoordinates.y + dY);
+                    T node = GetPathNode((int)nodeCoordinates.x + dX, (int)nodeCoordinates.y + dY);
                     if (node != null) // && node.Terrain.Difficulty != MoveDifficulty.NotWalkable
                     {
                         neighbourNodes.Add(node);
@@ -88,7 +86,7 @@ namespace SCiENiDE.Core
         {
             get
             {
-                return GetGridCell(x, y);
+                return GetPathNode(x, y);
             }
             set
             {
@@ -113,7 +111,7 @@ namespace SCiENiDE.Core
             if (x >= 0 && y >= 0 && x < _width && y < _height)
             {
                 _gridArray[x, y] = value;
-                OnGridCellChanged?.Invoke(this, new OnGridCellChangedEventArgs { x = x, y = y, DebugTextMeshes = _debugTextArray });
+                OnGridCellChanged?.Invoke(this, new OnGridCellChangedEventArgs { x = x, y = y, CellMap = _debugTextArray });
             }
         }
         public void SetGridCell(Vector3 worldPosition, T value)
@@ -122,7 +120,7 @@ namespace SCiENiDE.Core
             SetGridCell(x, y, value);
         }
 
-        public T GetGridCell(int x, int y)
+        public T GetPathNode(int x, int y)
         {
             if (x >= 0 && y >= 0 && x < _width && y < _height)
             {
@@ -134,7 +132,7 @@ namespace SCiENiDE.Core
         public T GetGridCell(Vector3 worldPosition)
         {
             WorldPositionToGridPosition(worldPosition, out int x, out int y);
-            return GetGridCell(x, y);
+            return GetPathNode(x, y);
         }
 
         public void TriggetAllGridCellsChanged()
@@ -149,7 +147,7 @@ namespace SCiENiDE.Core
         }
         public void TriggerOnGridCellChanged(int x, int y)
         {
-            OnGridCellChanged?.Invoke(this, new OnGridCellChangedEventArgs { x = x, y = y, DebugTextMeshes = _debugTextArray });
+            OnGridCellChanged?.Invoke(this, new OnGridCellChangedEventArgs { x = x, y = y, CellMap = _debugTextArray });
         }
         public Vector3 GetWorldPosition(int x, int y, bool centeredOnTile = false)
         {

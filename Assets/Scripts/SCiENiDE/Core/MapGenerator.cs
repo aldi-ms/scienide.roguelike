@@ -25,7 +25,7 @@ namespace SCiENiDE.Core
             int height,
             bool useRandomSeed = true,
             int seed = -1,
-            Action<BaseGrid<IPathNode>, TextMesh[,]> debugCallback = null,
+            Action<BaseGrid<IPathNode>, Component[,]> debugCallback = null,
             int fillPercent = 43)
         {
             _width = width;
@@ -54,7 +54,7 @@ namespace SCiENiDE.Core
             _rooms = new RectInt[Random.Range(minRoomsRange, maxRoomsRange)];
 
             _map = new BaseGrid<IPathNode>(
-                _width, _height, 3.5f, new Vector3(-110f, -60f),
+                _width, _height, 5f, new Vector3(-110f, -60f),
                 (x, y) =>
                 {
                     return new PathNode(x, y, MoveDifficulty.NotWalkable);
@@ -269,7 +269,7 @@ namespace SCiENiDE.Core
             {
                 for (int y = 0; y < _height; y++)
                 {
-                    var currentNode = _map.GetGridCell(x, y);
+                    var currentNode = _map.GetPathNode(x, y);
                     if (currentNode == null) continue;
 
                     MoveDifficulty currentTerrain = currentNode.Terrain.Difficulty;
@@ -293,7 +293,7 @@ namespace SCiENiDE.Core
 
             return roomRegions;
         }
-        private void GenerateRooms()
+        private void GenerateRooms() 
         {
             Debug.Log($"Generating [{_rooms.Length}] rooms.");
 
@@ -361,7 +361,7 @@ namespace SCiENiDE.Core
         }
         private List<IPathNode> GetRegionTiles(int x, int y, BaseGrid<IPathNode> map)
         {
-            var startNode = _map.GetGridCell(x, y);
+            var startNode = _map.GetPathNode(x, y);
             if (startNode == null)
             {
                 return null;
