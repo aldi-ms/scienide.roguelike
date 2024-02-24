@@ -19,14 +19,14 @@ namespace SCiENiDE.Core
         private int _smoothing;
 
         private RectInt[] _rooms;
-        private Grid<IPathNode> _map;
+        private Grid _map;
 
         public MapGenerator(
             int width,
             int height,
             bool useRandomSeed = true,
             int seed = -1,
-            Action<Grid<IPathNode>, Component[,]> displayCallback = null,
+            Action<Grid, Component[,]> displayCallback = null,
             int fillPercent = 43,
             int smoothing = 2)
         {
@@ -56,7 +56,7 @@ namespace SCiENiDE.Core
             int maxRoomsRange = 20;
             _rooms = new RectInt[Random.Range(minRoomsRange, maxRoomsRange)];
 
-            _map = new Grid<IPathNode>(
+            _map = new Grid(
                 _width, _height, 5f, new Vector3(-110f, -60f),
                 (x, y) =>
                 {
@@ -65,13 +65,13 @@ namespace SCiENiDE.Core
                 displayCallback);
         }
 
-        public Grid<IPathNode> Map
+        public Grid Map
         {
             get { return _map; }
             private set { _map = value; }
         }
 
-        public Grid<IPathNode> GenerateMap(MapType mapType)
+        public Grid GenerateMap(MapType mapType)
         {
             switch (mapType)
             {
@@ -154,6 +154,7 @@ namespace SCiENiDE.Core
 
             ConnectRooms(flatRoomList);
         }
+
         private void ConnectRooms(List<Room> rooms, bool forceConnect = false)
         {
             if (rooms.Count <= 1)
@@ -187,8 +188,8 @@ namespace SCiENiDE.Core
             int bestDistance = int.MaxValue;
             Room bestRoomA = null;
             Room bestRoomB = null;
-            IPathNode bestNodeA = null;
-            IPathNode bestNodeB = null;
+            PathNode bestNodeA = null;
+            PathNode bestNodeB = null;
             bool matchFound = false;
             foreach (Room roomA in roomListA)
             {
@@ -243,7 +244,8 @@ namespace SCiENiDE.Core
                 ConnectRooms(rooms, true);
             }
         }
-        private void CreatePassage(Room a, Room b, IPathNode nodeA, IPathNode nodeB)
+
+        private void CreatePassage(Room a, Room b, PathNode nodeA, PathNode nodeB)
         {
             Debug.Log($"Connecting room nodes [{nodeA}] => [{nodeB}]");
             Room.ConnectRooms(a, b);
@@ -251,7 +253,7 @@ namespace SCiENiDE.Core
             Vector3 startVector = _map.GetWorldPosition(nodeA.X, nodeA.Y, true);
             Vector3 endVector = _map.GetWorldPosition(nodeB.X, nodeB.Y, true);
 
-            var passageNodes = new List<IPathNode>();
+            var passageNodes = new List<PathNode>();
             int diagonalDistance = Utils.DiagonalDistance(nodeA.X, nodeA.Y, nodeB.X, nodeB.Y);
             for (int i = 0; i <= diagonalDistance; i++)
             {
@@ -266,10 +268,12 @@ namespace SCiENiDE.Core
                 _map.TriggerOnGridCellChanged(n.X, n.Y);
             }
         }
+
         private Vector3 CoordToWorldPoint(int x, int y)
         {
             return new Vector3(-_width / 2 + .5f + x, 2, -_height / 2 + .5f + y);
         }
+
         private Dictionary<MoveDifficulty, List<Room>> GetMapRegions()
         {
             Dictionary<MoveDifficulty, List<Room>> roomRegions = new Dictionary<MoveDifficulty, List<Room>>();
@@ -301,6 +305,7 @@ namespace SCiENiDE.Core
 
             return roomRegions;
         }
+
         private void GenerateRooms() 
         {
             Debug.Log($"Generating [{_rooms.Length}] rooms.");
@@ -316,10 +321,12 @@ namespace SCiENiDE.Core
                 }
             }
         }
+
         private Vector2Int GetRandomRoomSize()
         {
             return new Vector2Int(Random.Range(3, 7), Random.Range(3, 6));
         }
+
         private RectInt GenerateRoom(
             int roomWidth,
             int roomHeight,
@@ -357,6 +364,7 @@ namespace SCiENiDE.Core
 
             return createdRoom;
         }
+
         private void RandomFillMap(int wallPercent = 43)
         {
             for (int x = 0; x < _width; x++)
@@ -368,7 +376,8 @@ namespace SCiENiDE.Core
                 }
             }
         }
-        private List<IPathNode> GetRegionTiles(int x, int y, Grid<IPathNode> map)
+
+        private List<PathNode> GetRegionTiles(int x, int y, Grid map)
         {
             var startNode = _map.GetPathNode(x, y);
             if (startNode == null)
@@ -376,8 +385,8 @@ namespace SCiENiDE.Core
                 return null;
             }
 
-            var open = new Queue<IPathNode>();
-            var closed = new List<IPathNode>();
+            var open = new Queue<PathNode>();
+            var closed = new List<PathNode>();
 
             open.Enqueue(startNode);
 
@@ -399,6 +408,7 @@ namespace SCiENiDE.Core
 
             return closed;
         }
+
         private bool IsValidMapBounds(int x, int y)
         {
             return x >= 0 && x < _width && y >= 0 && y < _height;

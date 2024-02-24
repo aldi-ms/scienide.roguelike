@@ -7,12 +7,12 @@ namespace SCiENiDE.Core
     public static class CellularAutomataExtensions
     {
         #region Rulesets
-        private static Dictionary<MapType, Func<IEnumerable<IPathNode>, NodeTerrain, MoveDifficulty>> _rulesets
-            = new Dictionary<MapType, Func<IEnumerable<IPathNode>, NodeTerrain, MoveDifficulty>>
+        private static Dictionary<MapType, Func<IEnumerable<PathNode>, NodeTerrain, MoveDifficulty>> _rulesets
+            = new Dictionary<MapType, Func<IEnumerable<PathNode>, NodeTerrain, MoveDifficulty>>
             {
                 {
                     MapType.Rooms,
-                    (IEnumerable<IPathNode> neighbours, NodeTerrain currentTerrain) =>
+                    (IEnumerable<PathNode> neighbours, NodeTerrain currentTerrain) =>
                     {
                         int d = 8 - neighbours.Count(); // TODO: IEnumerable maybe is not the best here since Count is not O(1) operation, but it'll do for now
                         int wallCount = 8 - neighbours.Count(x => x.Terrain.Difficulty == MoveDifficulty.NotWalkable) + d;
@@ -25,7 +25,7 @@ namespace SCiENiDE.Core
                 },
                 {
                     MapType.RandomFill,
-                    (IEnumerable<IPathNode> neighbours, NodeTerrain currentTerrain) =>
+                    (IEnumerable<PathNode> neighbours, NodeTerrain currentTerrain) =>
                     {
                         int d = 8 - neighbours.Count();
                         int wallCount = neighbours.Count(x => x.Terrain.Difficulty == MoveDifficulty.NotWalkable) + d;
@@ -37,7 +37,7 @@ namespace SCiENiDE.Core
             };
         #endregion
 
-        public static void RunCARuleset(this Grid<IPathNode> map, MapType mapType)
+        public static void RunCARuleset(this Grid map, MapType mapType)
         {
             MoveDifficulty[,] modifiedMap = new MoveDifficulty[map.Width, map.Height];
             for (int x = 0; x < map.Width; x++)

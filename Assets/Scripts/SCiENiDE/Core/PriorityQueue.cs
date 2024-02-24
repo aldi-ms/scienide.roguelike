@@ -5,10 +5,10 @@ namespace SCiENiDE.Core
 {
     public class PriorityQueue<T>
     {
-        private IComparer<T> _comparer;
-        private T[] _dataArray;
+        private readonly static T _defaultValue = default;
+        private readonly IComparer<T> _comparer;
+        private readonly T[] _dataArray;
         private int _firstEmptyIdx;
-        private readonly static T _defaultValue = default(T);
 
         public PriorityQueue(Comparer<T> comparer, int capacity)
         {

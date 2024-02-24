@@ -7,23 +7,23 @@ namespace Assets.Scripts.SCiENiDE.Core
 {
     public class Room : IComparable<Room>
     {
-        private List<IPathNode> _tiles;
-        private List<IPathNode> _edgeTiles;
+        private List<PathNode> _tiles;
+        private List<PathNode> _edgeTiles;
         private int _roomSize;
         private List<Room> _neighbourRooms;
         public bool IsAccesibleFromMainRoom { get; set; }
         public bool IsMainRoom { get; set; }
-
-        public List<IPathNode> Tiles { get { return _tiles; } }
-        public List<IPathNode> EdgeTiles { get { return _edgeTiles; } }
+        
+        public List<PathNode> Tiles { get { return _tiles; } }
+        public List<PathNode> EdgeTiles { get { return _edgeTiles; } }
         public int Size { get { return _roomSize; } }
         public List<Room> NeighbourRooms { get { return _neighbourRooms; } }
 
-        public Room(List<IPathNode> roomTiles, Grid<IPathNode> map)
+        public Room(List<PathNode> roomTiles, Grid map)
         {
             _tiles = roomTiles;
             _roomSize = _tiles.Count;
-            _edgeTiles = new List<IPathNode>();
+            _edgeTiles = new List<PathNode>();
             _neighbourRooms = new List<Room>();
 
             foreach (var tile in roomTiles)

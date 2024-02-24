@@ -2,8 +2,10 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using UnityEngine;
+
 using Debug = UnityEngine.Debug;
 using Random = UnityEngine.Random;
+using Grid = SCiENiDE.Core.Grid;
 
 public class Testing : MonoBehaviour
 {
@@ -29,9 +31,9 @@ public class Testing : MonoBehaviour
             fillPercent: 48,
             smoothing: 2);
 
-        generator.Map.OnGridCellChanged += (object sender, Grid<IPathNode>.OnGridCellChangedEventArgs args) =>
+        generator.Map.OnGridCellChanged += (object sender, Grid.OnGridCellChangedEventArgs args) =>
         {
-            if (sender is not Grid<IPathNode> map)
+            if (sender is not Grid map)
             {
                 return;
             }
@@ -58,14 +60,13 @@ public class Testing : MonoBehaviour
         var path = AStarPathfinding.Pathfind(map, Random.Range(0, WidthInCells), Random.Range(0, HeightInCells), Random.Range(0, WidthInCells), Random.Range(0, HeightInCells));
     }
 
-    private void InitializeVisualArray(Grid<IPathNode> map, ref Component[,] visualArray)
+    private void InitializeVisualArray(Grid map, ref Component[,] visualArray)
     {
         for (int x = 0; x < map.Width; x++)
         {
             for (int y = 0; y < map.Height; y++)
             {
                 visualArray[x, y] = Utils.CreateMapCell(
-                    null,
                     map.CellSize,
                     Utils.GetPathNodeColor(map.GetPathNode(x, y)),
                     map.GetWorldPosition(x, y) + new Vector3(map.CellSize, map.CellSize) * .5f);

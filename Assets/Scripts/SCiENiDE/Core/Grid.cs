@@ -4,33 +4,33 @@ using UnityEngine;
 
 namespace SCiENiDE.Core
 {
-    public class Grid<T>
+    public class Grid
     {
         public event EventHandler<OnGridCellChangedEventArgs> OnGridCellChanged;
 
         private readonly int _width;
         private readonly int _height;
         private readonly float _cellSize;
-        private readonly T[,] _gridArray;
+        private readonly PathNode[,] _gridArray;
         private readonly Component[,] _cellVisualArray;
         private Vector3 _originPosition;
-        private Dictionary<Vector2, IEnumerable<T>> _neighbourCache;
+        private Dictionary<Vector2, IEnumerable<PathNode>> _neighbourCache;
 
         public Grid(
             int width, 
             int height, 
             float cellSize, 
             Vector3 originPosition, 
-            Func<int, int, T> createGridCellFunc,
-            Action<Grid<T>, Component[,]> displayCallback = null)
+            Func<int, int, PathNode> createGridCellFunc,
+            Action<Grid, Component[,]> displayCallback = null)
         {
             _width = width;
             _height = height;
             _cellSize = cellSize;
             _originPosition = originPosition;
-            _neighbourCache= new Dictionary<Vector2, IEnumerable<T>>();
+            _neighbourCache= new Dictionary<Vector2, IEnumerable<PathNode>>();
 
-            _gridArray = new T[_width, _height];
+            _gridArray = new PathNode[_width, _height];
             _cellVisualArray = new Component[_width, _height];
 
             for (int x = 0; x < _gridArray.GetLength(0); x++)
@@ -44,7 +44,7 @@ namespace SCiENiDE.Core
             displayCallback?.Invoke(this, _cellVisualArray);
         }
 
-        public T this[int x, int y]
+        public PathNode this[int x, int y]
         {
             get
             {
@@ -71,7 +71,7 @@ namespace SCiENiDE.Core
             get { return _cellSize; }
         }
 
-        public IEnumerable<T> GetNeighbourNodesCached(Vector2 nodeCoordinates)
+        public IEnumerable<PathNode> GetNeighbourNodesCached(Vector2 nodeCoordinates)
         {
             // TODO: implement option to reset neighbours of a cell/ reload cache
             if (_neighbourCache.ContainsKey(nodeCoordinates))
@@ -79,7 +79,7 @@ namespace SCiENiDE.Core
                 return _neighbourCache[nodeCoordinates];
             }
 
-            var neighbourNodes = new List<T>();
+            var neighbourNodes = new List<PathNode>();
             for (int dX = -1; dX <= 1; dX++)
             {
                 for (int dY = -1; dY <= 1; dY++)
@@ -89,7 +89,7 @@ namespace SCiENiDE.Core
                         continue;
                     }
 
-                    T node = GetPathNode((int)nodeCoordinates.x + dX, (int)nodeCoordinates.y + dY);
+                    PathNode node = GetPathNode((int)nodeCoordinates.x + dX, (int)nodeCoordinates.y + dY);
                     if (node != null) // && node.Terrain.Difficulty != MoveDifficulty.NotWalkable
                     {
                         neighbourNodes.Add(node);
@@ -102,7 +102,7 @@ namespace SCiENiDE.Core
             return neighbourNodes.ToArray();
         }
         
-        public void SetGridCell(int x, int y, T value)
+        public void SetGridCell(int x, int y, PathNode value)
         {
             if (x >= 0 && y >= 0 && x < _width && y < _height)
             {
@@ -111,13 +111,13 @@ namespace SCiENiDE.Core
             }
         }
 
-        public void SetGridCell(Vector3 worldPosition, T value)
+        public void SetGridCell(Vector3 worldPosition, PathNode value)
         {
             WorldPositionToGridPosition(worldPosition, out int x, out int y);
             SetGridCell(x, y, value);
         }
 
-        public T GetPathNode(int x, int y)
+        public PathNode GetPathNode(int x, int y)
         {
             if (x >= 0 && y >= 0 && x < _width && y < _height)
             {
@@ -127,7 +127,7 @@ namespace SCiENiDE.Core
             return default;
         }
 
-        public T GetGridCell(Vector3 worldPosition)
+        public PathNode GetGridCell(Vector3 worldPosition)
         {
             WorldPositionToGridPosition(worldPosition, out int x, out int y);
             return GetPathNode(x, y);

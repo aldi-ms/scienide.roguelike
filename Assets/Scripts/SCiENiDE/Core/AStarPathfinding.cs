@@ -10,7 +10,7 @@ namespace SCiENiDE.Core
         private const float MainMoveCost = 1f;
         private readonly static float DiagonalMoveCost = Mathf.Sqrt(2);
 
-        public static IPathNode[] Pathfind(Grid<IPathNode> map, int startX, int startY, int endX, int endY)
+        public static PathNode[] Pathfind(Grid map, int startX, int startY, int endX, int endY)
         {
             var endNode = map.GetPathNode(endX, endY);
             if (endNode == null || endNode.Terrain.Difficulty == MoveDifficulty.NotWalkable)
@@ -18,10 +18,10 @@ namespace SCiENiDE.Core
                 return null;
             }
 
-            var cameFrom = new Dictionary<IPathNode, IPathNode>();
+            var cameFrom = new Dictionary<PathNode, PathNode>();
             var costSoFar = new Dictionary<Vector2, int>();
-            var openSet = new PriorityQueue<IPathNode>(
-                Comparer<IPathNode>.Create((x, y) =>
+            var openSet = new PriorityQueue<PathNode>(
+                Comparer<PathNode>.Create((x, y) =>
                 {
                     if (x == null && y == null) return 0;
                     if (x == null && y != null) return 1;
@@ -102,12 +102,12 @@ namespace SCiENiDE.Core
             return MainMoveCost * (dx + dy) + (DiagonalMoveCost - 2 * MainMoveCost) * Mathf.Min(dx, dy);
         }
 
-        private static IPathNode[] RecostructPath(Grid<IPathNode> map, Dictionary<IPathNode, IPathNode> cameFrom, int startX, int startY, int endX, int endY)
+        private static PathNode[] RecostructPath(Grid map, Dictionary<PathNode, PathNode> cameFrom, int startX, int startY, int endX, int endY)
         {
             var current = map.GetPathNode(endX, endY);
             var startNode = map.GetPathNode(startX, startY);
 
-            var path = new List<IPathNode>();
+            var path = new List<PathNode>();
 
             while (current != startNode)
             {

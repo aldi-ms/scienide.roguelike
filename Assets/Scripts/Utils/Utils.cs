@@ -1,36 +1,24 @@
-﻿using System;
-using System.Collections.Generic;
-using TMPro;
-using Unity.Mathematics;
+﻿using System.Collections.Generic;
 using UnityEngine;
 
 namespace SCiENiDE.Core
 {
     public class Utils
     {
-        public static Color GetPathNodeColor(IPathNode pathNode)
+        private readonly static Dictionary<Color, Texture2D> _textureMap = new Dictionary<Color, Texture2D>();
+
+        public static Color GetPathNodeColor(PathNode pathNode)
         {
-            switch (pathNode.Terrain.Difficulty)
+            return pathNode.Terrain.Difficulty switch
             {
-                case MoveDifficulty.Easy:
-                    return Color.green;
-
-                case MoveDifficulty.Medium:
-                    return Color.yellow;
-
-                case MoveDifficulty.Hard:
-                    return Color.red;
-
-                case MoveDifficulty.NotWalkable:
-                    return Color.gray;
-
-                case MoveDifficulty.None:
-                default:
-                    return Color.white;
-            }
+                MoveDifficulty.Easy => Color.green,
+                MoveDifficulty.Medium => Color.yellow,
+                MoveDifficulty.Hard => Color.red,
+                MoveDifficulty.NotWalkable => Color.gray,
+                _ => Color.white,
+            };
         }
 
-        private readonly static Dictionary<Color, Texture2D> _textureMap = new Dictionary<Color, Texture2D>();
         public static Texture2D GetSharedSingleColorTexture2D(Color color)
         {
             if (_textureMap.ContainsKey(color)) 
@@ -47,9 +35,9 @@ namespace SCiENiDE.Core
         public static TextMesh CreateWorldText(
             string text,
             Transform parent = null,
-            Vector3 localPosition = default(Vector3),
+            Vector3 localPosition = default,
             int fontSize = 40,
-            Color color = default(Color),
+            Color color = default,
             TextAnchor textAnchor = TextAnchor.UpperLeft,
             TextAlignment textAlignment = TextAlignment.Left,
             int sortingOrder = 0)
@@ -58,6 +46,7 @@ namespace SCiENiDE.Core
             Transform transform = gameObject.transform;
             transform.SetParent(parent);
             transform.localPosition = localPosition;
+
             TextMesh textMesh = gameObject.GetComponent<TextMesh>();
             textMesh.anchor = textAnchor;
             textMesh.alignment = textAlignment;
@@ -70,7 +59,6 @@ namespace SCiENiDE.Core
         }
 
         public static Component CreateMapCell(
-            Transform parent,
             float size,
             Color color,
             Vector3 localPosition = default(Vector3))
