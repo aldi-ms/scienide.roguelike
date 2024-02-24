@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections.Generic;
+using TMPro;
 using Unity.Mathematics;
 using UnityEngine;
 
@@ -6,6 +8,42 @@ namespace SCiENiDE.Core
 {
     public class Utils
     {
+        public static Color GetPathNodeColor(IPathNode pathNode)
+        {
+            switch (pathNode.Terrain.Difficulty)
+            {
+                case MoveDifficulty.Easy:
+                    return Color.green;
+
+                case MoveDifficulty.Medium:
+                    return Color.yellow;
+
+                case MoveDifficulty.Hard:
+                    return Color.red;
+
+                case MoveDifficulty.NotWalkable:
+                    return Color.gray;
+
+                case MoveDifficulty.None:
+                default:
+                    return Color.white;
+            }
+        }
+
+        private readonly static Dictionary<Color, Texture2D> _textureMap = new Dictionary<Color, Texture2D>();
+        public static Texture2D GetSharedSingleColorTexture2D(Color color)
+        {
+            if (_textureMap.ContainsKey(color)) 
+                return _textureMap[color];
+
+            var texture = new Texture2D(1, 1);
+            texture.SetPixel(1, 1, color);
+            texture.Apply();
+
+            _textureMap[color] = texture;
+            return _textureMap[color];
+        }
+
         public static TextMesh CreateWorldText(
             string text,
             Transform parent = null,
@@ -59,8 +97,8 @@ namespace SCiENiDE.Core
 
             // Adjust position, scale, etc. as needed
             rectangleObject.transform.localPosition = localPosition;
-            Debug.Log(localPosition);
-            rectangleObject.transform.localScale = new Vector3(size, size, 0) ;
+            //Debug.Log(localPosition);
+            rectangleObject.transform.localScale = new Vector3(size, size, 0);
 
             return spriteRenderer;
         }
@@ -77,16 +115,5 @@ namespace SCiENiDE.Core
             int dy = endY - startY;
             return Mathf.Max(Mathf.Abs(dx), Mathf.Abs(dy));
         }
-
-        //public static void InitializePathNodeNeighbours(BaseGrid<PathNode> map)
-        //{
-        //    for (int x = 0; x < map.GetWidth(); x++)
-        //    {
-        //        for (int y = 0; y < map.GetHeight(); y++)
-        //        {
-        //            PathNode currentNode = map.GetGridCell(x, y);
-        //        }
-        //    }
-        //}
     }
 }

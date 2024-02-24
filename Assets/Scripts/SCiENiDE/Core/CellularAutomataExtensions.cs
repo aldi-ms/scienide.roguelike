@@ -37,7 +37,7 @@ namespace SCiENiDE.Core
             };
         #endregion
 
-        public static void RunCARuleset(this BaseGrid<IPathNode> map, MapType mapType)
+        public static void RunCARuleset(this Grid<IPathNode> map, MapType mapType)
         {
             MoveDifficulty[,] modifiedMap = new MoveDifficulty[map.Width, map.Height];
             for (int x = 0; x < map.Width; x++)

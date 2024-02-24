@@ -16,17 +16,19 @@ namespace SCiENiDE.Core
         private int _totalNodeCount;
         private int _seed;
         private int _fillPercent;
+        private int _smoothing;
 
         private RectInt[] _rooms;
-        private BaseGrid<IPathNode> _map;
+        private Grid<IPathNode> _map;
 
         public MapGenerator(
             int width,
             int height,
             bool useRandomSeed = true,
             int seed = -1,
-            Action<BaseGrid<IPathNode>, Component[,]> debugCallback = null,
-            int fillPercent = 43)
+            Action<Grid<IPathNode>, Component[,]> displayCallback = null,
+            int fillPercent = 43,
+            int smoothing = 2)
         {
             _width = width;
             _height = height;
@@ -34,6 +36,7 @@ namespace SCiENiDE.Core
             _seed = seed;
             _useRandomSeed = useRandomSeed;
             _fillPercent = fillPercent;
+            _smoothing = smoothing;
 
             if (_useRandomSeed)
             {
@@ -53,39 +56,45 @@ namespace SCiENiDE.Core
             int maxRoomsRange = 20;
             _rooms = new RectInt[Random.Range(minRoomsRange, maxRoomsRange)];
 
-            _map = new BaseGrid<IPathNode>(
+            _map = new Grid<IPathNode>(
                 _width, _height, 5f, new Vector3(-110f, -60f),
                 (x, y) =>
                 {
-                    return new PathNode(x, y, MoveDifficulty.NotWalkable);
+                    return new PathNode(x, y, MoveDifficulty.Easy);
                 },
-                debugCallback);
+                displayCallback);
         }
 
-        public BaseGrid<IPathNode> Map
+        public Grid<IPathNode> Map
         {
             get { return _map; }
             private set { _map = value; }
         }
 
-        public BaseGrid<IPathNode> GenerateMap(MapType mapType, int smoothing)
+        public Grid<IPathNode> GenerateMap(MapType mapType)
         {
             switch (mapType)
             {
                 case MapType.Rooms:
                     {
                         GenerateRooms();
-                        for (int i = 0; i < smoothing; i++)
+                        for (int i = 0; i < _smoothing; i++)
+                        {
                             _map.RunCARuleset(mapType);
+                        }
+
+                        ProcessMap();
                     }
                     break;
 
                 case MapType.RandomFill:
                     {
                         RandomFillMap(_fillPercent);
-                        for (int i = 0; i < smoothing; i++)
+                        _map.TriggerAllGridCellsChanged();
+                        for (int i = 0; i < _smoothing; i++)
+                        {
                             _map.RunCARuleset(mapType);
-
+                        }
                     }
                     break;
 
@@ -99,10 +108,9 @@ namespace SCiENiDE.Core
                     break;
             }
 
-            ProcessMap();
-
             return _map;
         }
+
         private void ProcessMap()
         {
             Dictionary<MoveDifficulty, List<Room>> roomRegions = GetMapRegions();
@@ -134,7 +142,7 @@ namespace SCiENiDE.Core
                 }
             }
 
-            _map.TriggetAllGridCellsChanged();
+            _map.TriggerAllGridCellsChanged();
 
             List<Room> flatRoomList = survivingRoomRegions
                 .Select(x => x.Value)
@@ -355,11 +363,12 @@ namespace SCiENiDE.Core
             {
                 for (int y = 0; y < _height; y++)
                 {
-                    _map[x, y].Terrain.Difficulty = Random.Range(0, 100) < wallPercent ? MoveDifficulty.NotWalkable : MoveDifficulty.Easy;
+                    var z = Random.Range(0, 100);
+                    _map[x, y].Terrain.Difficulty = z < wallPercent ? MoveDifficulty.NotWalkable : MoveDifficulty.Easy;
                 }
             }
         }
-        private List<IPathNode> GetRegionTiles(int x, int y, BaseGrid<IPathNode> map)
+        private List<IPathNode> GetRegionTiles(int x, int y, Grid<IPathNode> map)
         {
             var startNode = _map.GetPathNode(x, y);
             if (startNode == null)

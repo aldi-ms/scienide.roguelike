@@ -7,8 +7,10 @@ namespace SCiENiDE.Core
     public class AStarPathfinding
     {
         private const float p = 1f / 1000f;
+        private const float MainMoveCost = 1f;
+        private readonly static float DiagonalMoveCost = Mathf.Sqrt(2);
 
-        public static IPathNode[] Pathfind(BaseGrid<IPathNode> map, int startX, int startY, int endX, int endY)
+        public static IPathNode[] Pathfind(Grid<IPathNode> map, int startX, int startY, int endX, int endY)
         {
             var endNode = map.GetPathNode(endX, endY);
             if (endNode == null || endNode.Terrain.Difficulty == MoveDifficulty.NotWalkable)
@@ -85,8 +87,6 @@ namespace SCiENiDE.Core
             }
         }
 
-        private const float MainMoveCost = 1f;
-        private readonly static float DiagonalMoveCost = Mathf.Sqrt(2);
         private static float Heuristic(int startX, int startY, int endX, int endY)
         {
             int dx = Mathf.Abs(startX - endX);
@@ -101,7 +101,8 @@ namespace SCiENiDE.Core
             /* Diagonal distance */
             return MainMoveCost * (dx + dy) + (DiagonalMoveCost - 2 * MainMoveCost) * Mathf.Min(dx, dy);
         }
-        private static IPathNode[] RecostructPath(BaseGrid<IPathNode> map, Dictionary<IPathNode, IPathNode> cameFrom, int startX, int startY, int endX, int endY)
+
+        private static IPathNode[] RecostructPath(Grid<IPathNode> map, Dictionary<IPathNode, IPathNode> cameFrom, int startX, int startY, int endX, int endY)
         {
             var current = map.GetPathNode(endX, endY);
             var startNode = map.GetPathNode(startX, startY);

@@ -19,7 +19,7 @@ namespace Assets.Scripts.SCiENiDE.Core
         public int Size { get { return _roomSize; } }
         public List<Room> NeighbourRooms { get { return _neighbourRooms; } }
 
-        public Room(List<IPathNode> roomTiles, BaseGrid<IPathNode> map)
+        public Room(List<IPathNode> roomTiles, Grid<IPathNode> map)
         {
             _tiles = roomTiles;
             _roomSize = _tiles.Count;
@@ -39,6 +39,7 @@ namespace Assets.Scripts.SCiENiDE.Core
         {
             return _neighbourRooms.Contains(x);
         }
+
         public static void ConnectRooms(Room a, Room b)
         {
             if (a.IsAccesibleFromMainRoom)
@@ -53,6 +54,7 @@ namespace Assets.Scripts.SCiENiDE.Core
             a._neighbourRooms.Add(b);
             b._neighbourRooms.Add(a);
         }
+
         public void SetAccessibleFromMainRoom()
         {
             if (!IsAccesibleFromMainRoom)
