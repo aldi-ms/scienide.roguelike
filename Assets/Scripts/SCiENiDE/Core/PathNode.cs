@@ -49,7 +49,7 @@ namespace SCiENiDE.Core
 
         public string ToLongString()
         {
-            return $"{_x}:{_y}{(Visited ? "*" : string.Empty)}\r\n{(int)_terrain.Difficulty}/{fScore.ToString("F1")}";
+            return $"{_x}:{_y}-{_terrain.Difficulty}{(IsPath ? "-Path" : string.Empty)}{(!IsPath && Visited ? "-Visited" : string.Empty)}";
         }
 
         public override string ToString()

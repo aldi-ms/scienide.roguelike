@@ -106,8 +106,7 @@ namespace SCiENiDE.Core
 
         public static Vector3 GetMouseWorldPosition()
         {
-            Vector3 worldPosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
-            return worldPosition;
+            return Camera.main.ScreenToWorldPoint(Input.mousePosition);
         }
 
         public static int DiagonalDistance(int startX, int startY, int endX, int endY)

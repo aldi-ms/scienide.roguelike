@@ -20,11 +20,13 @@ public class Testing : MonoBehaviour
         122014906,
     };
 
+    private static Grid _map;
+
     private void Start()
     {
         var sw = Stopwatch.StartNew();
 
-        var generator = new MapGenerator(WidthInCells, HeightInCells, fillPercent: 48, smoothing: 2);
+        var generator = new MapGenerator(WidthInCells, HeightInCells, fillPercent: 48, smoothing: 2, seed: 903168484);
 
         generator.Map.OnGridCellChanged += (object sender, Grid.OnGridCellChangedEventArgs args) =>
         {
@@ -47,43 +49,24 @@ public class Testing : MonoBehaviour
             sre.SetPropertyBlock(block);
         };
 
-        var map = generator.GenerateMap(MapType.RandomFill);
+        _map = generator.GenerateMap(MapType.RandomFill);
 
         sw.Stop();
         Debug.Log($"Time spent generating map: [{sw.ElapsedMilliseconds}]ms.");
 
         // Play around with pathfinding
         var path = AStarPathfinding.Pathfind(
-            map,
-            map.GetRandomAvailablePathNode(),
-            map.GetRandomAvailablePathNode());
+            _map,
+            _map.GetPathNode(42, 3),//map.GetRandomAvailablePathNode(),
+            _map.GetPathNode(3, 2));//map.GetRandomAvailablePathNode());
     }
 
-    //private void BaseObjectToStringDebug<T>(BaseGrid<T> map, TextMesh[,] debugTextArray)
-    //{
-    //    for (int x = 0; x < map.Width; x++)
-    //    {
-    //        for (int y = 0; y < map.Height; y++)
-    //        {
-    //            debugTextArray[x, y] = Utils.CreateWorldText(
-    //                map.GetGridCell(x, y)?.ToString(),
-    //                null,
-    //                map.GetWorldPosition(x, y) + new Vector3(map.CellSize, map.CellSize) * .5f,
-    //                24,
-    //                Color.white,
-    //                TextAnchor.MiddleCenter);
-
-    //            Debug.DrawLine(map.GetWorldPosition(x, y), map.GetWorldPosition(x, y + 1), Color.white, 100f);
-    //            Debug.DrawLine(map.GetWorldPosition(x, y), map.GetWorldPosition(x + 1, y), Color.white, 100f);
-    //        }
-    //    }
-
-    //    Debug.DrawLine(map.GetWorldPosition(0, map.Height), map.GetWorldPosition(map.Width, map.Height), Color.white, 100f);
-    //    Debug.DrawLine(map.GetWorldPosition(map.Width, 0), map.GetWorldPosition(map.Width, map.Height), Color.white, 100f);
-
-    //    map.OnGridCellChanged += (object sender, BaseGrid<T>.OnGridCellChangedEventArgs args) =>
-    //    {
-    //        (args.DebugTextMeshes[args.x, args.y] as TextMesh).text = map.GetGridCell(args.x, args.y)?.ToString();
-    //    };
-    //}
+    private void Update()
+    {
+        if (Input.GetMouseButtonDown(0))
+        {
+            var node = _map.GetMousePositionInGrid();
+            Debug.Log(node.ToLongString());
+        }
+    }
 }

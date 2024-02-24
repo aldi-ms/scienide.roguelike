@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
@@ -168,8 +169,7 @@ namespace SCiENiDE.Core
 
         public PathNode GetRandomAvailablePathNode()
         {
-            int x;
-            int y;
+            int x, y;
             do
             {
                 x = Random.Range(0, Width);
@@ -179,11 +179,11 @@ namespace SCiENiDE.Core
             return GetPathNode(x, y);
         }
 
-        public class OnGridCellChangedEventArgs
+        public PathNode GetMousePositionInGrid()
         {
-            public int x;
-            public int y;
-            public Component[,] CellMap;
+            var mousePos = Utils.GetMouseWorldPosition();
+            WorldPositionToGridPosition(mousePos, out int x, out int y);
+            return GetPathNode(x, y);
         }
 
         private void InitializeComponentArray(ref Component[,] visualArray)
@@ -210,5 +210,12 @@ namespace SCiENiDE.Core
             Debug.DrawLine(GetWorldPosition(0, Height), GetWorldPosition(Width, Height), Color.white, 100f);
             Debug.DrawLine(GetWorldPosition(Width, 0), GetWorldPosition(Width, Height), Color.white, 100f);
         }
+    }
+
+    public class OnGridCellChangedEventArgs
+    {
+        public int x;
+        public int y;
+        public Component[,] CellMap;
     }
 }
