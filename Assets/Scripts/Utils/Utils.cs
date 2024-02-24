@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using Mono.CompilerServices.SymbolWriter;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace SCiENiDE.Core
@@ -9,19 +10,31 @@ namespace SCiENiDE.Core
 
         public static Color GetPathNodeColor(PathNode pathNode)
         {
-            return pathNode.Terrain.Difficulty switch
+            Color color = pathNode.Terrain.Difficulty switch
             {
                 MoveDifficulty.Easy => Color.green,
                 MoveDifficulty.Medium => Color.yellow,
                 MoveDifficulty.Hard => Color.red,
                 MoveDifficulty.NotWalkable => Color.gray,
-                _ => Color.white,
+                _ => Color.cyan,
             };
+
+            if (!pathNode.IsPath && !pathNode.Visited)
+            {
+                return color;
+            }
+
+            if (pathNode.IsPath)
+            {
+                return OffsetColorHue(color, 0.1f);
+            }
+
+            return OffsetColorHue(color, -0.1f);
         }
 
         public static Texture2D GetSharedSingleColorTexture2D(Color color)
         {
-            if (_textureMap.ContainsKey(color)) 
+            if (_textureMap.ContainsKey(color))
                 return _textureMap[color];
 
             var texture = new Texture2D(1, 1);
@@ -79,7 +92,7 @@ namespace SCiENiDE.Core
             redTexture.Apply(); // Apply changes to the texture
 
             // Create a new GameObject with a Sprite Renderer
-            GameObject rectangleObject = new GameObject("RedRectangle");
+            GameObject rectangleObject = new GameObject("Tile");
             SpriteRenderer spriteRenderer = rectangleObject.AddComponent<SpriteRenderer>();
             spriteRenderer.sprite = Sprite.Create(redTexture, new Rect(0, 0, textureSize, textureSize), Vector2.one * 0.5f, 5);
 
@@ -102,6 +115,23 @@ namespace SCiENiDE.Core
             int dx = endX - startX;
             int dy = endY - startY;
             return Mathf.Max(Mathf.Abs(dx), Mathf.Abs(dy));
+        }
+
+        private static Color OffsetColorHue(Color originalColor, float hueOffset)
+        {
+            Color.RGBToHSV(originalColor, out var h, out var s, out var v);
+            h = Mathf.Repeat(h + hueOffset, 1);
+
+            return Color.HSVToRGB(h, s, v);
+        }
+
+        private static Color OffsetColor(Color originalColor, float offset)
+        {
+            return new Color(
+                Mathf.Repeat(originalColor.r + offset, 1),
+                Mathf.Repeat(originalColor.g + offset, 1),
+                Mathf.Repeat(originalColor.b + offset, 1),
+                originalColor.a);
         }
     }
 }

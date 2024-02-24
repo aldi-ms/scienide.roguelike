@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 namespace SCiENiDE.Core
 {
@@ -17,18 +18,17 @@ namespace SCiENiDE.Core
         private Dictionary<Vector2, IEnumerable<PathNode>> _neighbourCache;
 
         public Grid(
-            int width, 
-            int height, 
-            float cellSize, 
-            Vector3 originPosition, 
-            Func<int, int, PathNode> createGridCellFunc,
-            Action<Grid, Component[,]> displayCallback = null)
+            int width,
+            int height,
+            float cellSize,
+            Vector3 originPosition,
+            Func<int, int, PathNode> createGridCellFunc)
         {
             _width = width;
             _height = height;
             _cellSize = cellSize;
             _originPosition = originPosition;
-            _neighbourCache= new Dictionary<Vector2, IEnumerable<PathNode>>();
+            _neighbourCache = new Dictionary<Vector2, IEnumerable<PathNode>>();
 
             _gridArray = new PathNode[_width, _height];
             _cellVisualArray = new Component[_width, _height];
@@ -41,7 +41,7 @@ namespace SCiENiDE.Core
                 }
             }
 
-            displayCallback?.Invoke(this, _cellVisualArray);
+            InitializeComponentArray(ref _cellVisualArray);
         }
 
         public PathNode this[int x, int y]
@@ -101,7 +101,7 @@ namespace SCiENiDE.Core
 
             return neighbourNodes.ToArray();
         }
-        
+
         public void SetGridCell(int x, int y, PathNode value)
         {
             if (x >= 0 && y >= 0 && x < _width && y < _height)
@@ -166,11 +166,49 @@ namespace SCiENiDE.Core
             y = Mathf.FloorToInt((worldPosition - _originPosition).y / _cellSize);
         }
 
+        public PathNode GetRandomAvailablePathNode()
+        {
+            int x;
+            int y;
+            do
+            {
+                x = Random.Range(0, Width);
+                y = Random.Range(0, Height);
+            } while (_gridArray[x, y].Terrain.Difficulty == MoveDifficulty.NotWalkable);
+
+            return GetPathNode(x, y);
+        }
+
         public class OnGridCellChangedEventArgs
         {
             public int x;
             public int y;
             public Component[,] CellMap;
+        }
+
+        private void InitializeComponentArray(ref Component[,] visualArray)
+        {
+            for (int x = 0; x < Width; x++)
+            {
+                for (int y = 0; y < Height; y++)
+                {
+                    visualArray[x, y] = Utils.CreateMapCell(
+                        CellSize,
+                        Utils.GetPathNodeColor(GetPathNode(x, y)),
+                        GetWorldPosition(x, y) + new Vector3(CellSize, CellSize) * .5f);
+
+                    //displayMap[x, y] = Utils.CreateWorldText(
+                    //    $"{x}:{y}",
+                    //    null,
+                    //    map.GetWorldPosition(x, y) + new Vector3(map.CellSize, map.CellSize) * .5f,
+                    //    12,
+                    //    GetPathNodeColor(map.GetPathNode(x, y)),
+                    //    TextAnchor.MiddleCenter);
+                }
+            }
+
+            Debug.DrawLine(GetWorldPosition(0, Height), GetWorldPosition(Width, Height), Color.white, 100f);
+            Debug.DrawLine(GetWorldPosition(Width, 0), GetWorldPosition(Width, Height), Color.white, 100f);
         }
     }
 }

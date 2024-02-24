@@ -9,8 +9,6 @@ namespace SCiENiDE.Core
 {
     public class MapGenerator
     {
-        private bool _useRandomSeed;
-
         private int _width;
         private int _height;
         private int _totalNodeCount;
@@ -24,9 +22,7 @@ namespace SCiENiDE.Core
         public MapGenerator(
             int width,
             int height,
-            bool useRandomSeed = true,
             int seed = -1,
-            Action<Grid, Component[,]> displayCallback = null,
             int fillPercent = 43,
             int smoothing = 2)
         {
@@ -34,11 +30,10 @@ namespace SCiENiDE.Core
             _height = height;
             _totalNodeCount = _width * _height;
             _seed = seed;
-            _useRandomSeed = useRandomSeed;
             _fillPercent = fillPercent;
             _smoothing = smoothing;
 
-            if (_useRandomSeed)
+            if (seed == -1)
             {
                 _seed = Environment.TickCount;
                 Random.InitState(_seed);
@@ -56,13 +51,7 @@ namespace SCiENiDE.Core
             int maxRoomsRange = 20;
             _rooms = new RectInt[Random.Range(minRoomsRange, maxRoomsRange)];
 
-            _map = new Grid(
-                _width, _height, 5f, new Vector3(-110f, -60f),
-                (x, y) =>
-                {
-                    return new PathNode(x, y, MoveDifficulty.Easy);
-                },
-                displayCallback);
+            _map = new Grid(_width, _height, 5f, new Vector3(-110f, -60f), (x, y) => new PathNode(x, y, MoveDifficulty.Easy));
         }
 
         public Grid Map
@@ -83,7 +72,6 @@ namespace SCiENiDE.Core
                             _map.RunCARuleset(mapType);
                         }
 
-                        ProcessMap();
                     }
                     break;
 
@@ -108,10 +96,12 @@ namespace SCiENiDE.Core
                     break;
             }
 
+            LoadMapFeatures();
+
             return _map;
         }
 
-        private void ProcessMap()
+        private void LoadMapFeatures()
         {
             Dictionary<MoveDifficulty, List<Room>> roomRegions = GetMapRegions();
             Dictionary<MoveDifficulty, List<Room>> survivingRoomRegions = new Dictionary<MoveDifficulty, List<Room>>();
@@ -142,17 +132,18 @@ namespace SCiENiDE.Core
                 }
             }
 
-            _map.TriggerAllGridCellsChanged();
-
             List<Room> flatRoomList = survivingRoomRegions
                 .Select(x => x.Value)
-                .SelectMany(x => x).ToList();
+                .SelectMany(x => x)
+                .ToList();
             flatRoomList.Sort();
 
             flatRoomList[0].IsMainRoom = true;
             flatRoomList[0].IsAccesibleFromMainRoom = true;
 
             ConnectRooms(flatRoomList);
+
+            _map.TriggerAllGridCellsChanged();
         }
 
         private void ConnectRooms(List<Room> rooms, bool forceConnect = false)
@@ -306,7 +297,7 @@ namespace SCiENiDE.Core
             return roomRegions;
         }
 
-        private void GenerateRooms() 
+        private void GenerateRooms()
         {
             Debug.Log($"Generating [{_rooms.Length}] rooms.");
 

@@ -4,8 +4,8 @@ namespace SCiENiDE.Core
 {
     public class PathNode : IPathNode
     {
-        private int _x;
-        private int _y;
+        private readonly int _x;
+        private readonly int _y;
         private NodeTerrain _terrain;
 
         public PathNode(int x, int y, MoveDifficulty moveDifficulty = MoveDifficulty.Medium)
@@ -54,7 +54,7 @@ namespace SCiENiDE.Core
 
         public override string ToString()
         {
-            return $"{_x}:{_y}::{_terrain.Difficulty}";
+            return $"{_x}:{_y}";
         }
     }
 }

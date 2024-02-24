@@ -1,6 +1,8 @@
 ﻿using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using UnityEngine;
+using Debug = UnityEngine.Debug;
 
 namespace SCiENiDE.Core
 {
@@ -12,11 +14,22 @@ namespace SCiENiDE.Core
 
         public static PathNode[] Pathfind(Grid map, int startX, int startY, int endX, int endY)
         {
+            var startNode = map.GetPathNode(startX, startY);
             var endNode = map.GetPathNode(endX, endY);
+
+            return Pathfind(map, startNode, endNode);
+        }
+        public static PathNode[] Pathfind(Grid map, PathNode startNode, PathNode endNode)
+        {
             if (endNode == null || endNode.Terrain.Difficulty == MoveDifficulty.NotWalkable)
             {
+                Debug.Log($"Pathfind: End is not walkable! Stopping.");
                 return null;
             }
+
+            Debug.Log($"Pathfind: Looking for valid path between [{startNode}] and [{endNode}].");
+
+            var sw = Stopwatch.StartNew();
 
             var cameFrom = new Dictionary<PathNode, PathNode>();
             var costSoFar = new Dictionary<Vector2, int>();
@@ -33,7 +46,6 @@ namespace SCiENiDE.Core
                 }),
                 map.Width * map.Height);
 
-            var startNode = map.GetPathNode(startX, startY);
             if (startNode == null)
             {
                 return null;
@@ -44,14 +56,14 @@ namespace SCiENiDE.Core
             cameFrom.Add(startNode, null);
             startNode.Visited = true;
             startNode.IsPath = true;
-            map.TriggerOnGridCellChanged(startX, startY);
+            map.TriggerOnGridCellChanged(startNode.X, startNode.Y);
             bool pathFound = false;
 
             while (openSet.Peek() != null)
             {
                 var currentNode = openSet.Pop();
 
-                if (currentNode.X == endX && currentNode.Y == endY)
+                if (currentNode.X == endNode.X && currentNode.Y == endNode.Y)
                 {
                     pathFound = true;
                     break;
@@ -66,7 +78,7 @@ namespace SCiENiDE.Core
                         || newCost < costSoFar[node.Coords])
                     {
                         costSoFar[node.Coords] = newCost;
-                        float hScore = Heuristic(node.X, node.Y, endX, endY) * (1f + p);
+                        float hScore = Heuristic(node.X, node.Y, endNode.X, endNode.Y) * (1f + p);
                         node.fScore = newCost + hScore;
                         openSet.Push(node);
                         cameFrom[node] = currentNode;
@@ -78,11 +90,16 @@ namespace SCiENiDE.Core
 
             if (pathFound)
             {
-                return RecostructPath(map, cameFrom, startX, startY, endX, endY);
+                var path = ReconstructPath(map, cameFrom, startNode.X, startNode.Y, endNode.X, endNode.Y);
+                sw.Stop();
+                
+                Debug.Log($"Pathfind finished in [{sw.ElapsedMilliseconds}]ms.");
+
+                return path;
             }
             else
             {
-                Debug.Log($"Could not find valid path from [{startX}:{startY}] to [{endX}:{endY}].");
+                Debug.Log($"Could not find valid path from [{startNode.X}:{startNode.Y}] to [{endNode.X}:{endNode.Y}].");
                 return null;
             }
         }
@@ -102,7 +119,7 @@ namespace SCiENiDE.Core
             return MainMoveCost * (dx + dy) + (DiagonalMoveCost - 2 * MainMoveCost) * Mathf.Min(dx, dy);
         }
 
-        private static PathNode[] RecostructPath(Grid map, Dictionary<PathNode, PathNode> cameFrom, int startX, int startY, int endX, int endY)
+        private static PathNode[] ReconstructPath(Grid map, Dictionary<PathNode, PathNode> cameFrom, int startX, int startY, int endX, int endY)
         {
             var current = map.GetPathNode(endX, endY);
             var startNode = map.GetPathNode(startX, startY);

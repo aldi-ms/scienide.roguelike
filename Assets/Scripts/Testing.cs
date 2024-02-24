@@ -24,12 +24,7 @@ public class Testing : MonoBehaviour
     {
         var sw = Stopwatch.StartNew();
 
-        MapGenerator generator = new MapGenerator(
-            WidthInCells,
-            HeightInCells,
-            displayCallback: (g, c) => InitializeVisualArray(g, ref c),
-            fillPercent: 48,
-            smoothing: 2);
+        var generator = new MapGenerator(WidthInCells, HeightInCells, fillPercent: 48, smoothing: 2);
 
         generator.Map.OnGridCellChanged += (object sender, Grid.OnGridCellChangedEventArgs args) =>
         {
@@ -57,32 +52,11 @@ public class Testing : MonoBehaviour
         sw.Stop();
         Debug.Log($"Time spent generating map: [{sw.ElapsedMilliseconds}]ms.");
 
-        var path = AStarPathfinding.Pathfind(map, Random.Range(0, WidthInCells), Random.Range(0, HeightInCells), Random.Range(0, WidthInCells), Random.Range(0, HeightInCells));
-    }
-
-    private void InitializeVisualArray(Grid map, ref Component[,] visualArray)
-    {
-        for (int x = 0; x < map.Width; x++)
-        {
-            for (int y = 0; y < map.Height; y++)
-            {
-                visualArray[x, y] = Utils.CreateMapCell(
-                    map.CellSize,
-                    Utils.GetPathNodeColor(map.GetPathNode(x, y)),
-                    map.GetWorldPosition(x, y) + new Vector3(map.CellSize, map.CellSize) * .5f);
-
-                //displayMap[x, y] = Utils.CreateWorldText(
-                //    $"{x}:{y}",
-                //    null,
-                //    map.GetWorldPosition(x, y) + new Vector3(map.CellSize, map.CellSize) * .5f,
-                //    12,
-                //    GetPathNodeColor(map.GetPathNode(x, y)),
-                //    TextAnchor.MiddleCenter);
-            }
-        }
-
-        Debug.DrawLine(map.GetWorldPosition(0, map.Height), map.GetWorldPosition(map.Width, map.Height), Color.white, 100f);
-        Debug.DrawLine(map.GetWorldPosition(map.Width, 0), map.GetWorldPosition(map.Width, map.Height), Color.white, 100f);
+        // Play around with pathfinding
+        var path = AStarPathfinding.Pathfind(
+            map,
+            map.GetRandomAvailablePathNode(),
+            map.GetRandomAvailablePathNode());
     }
 
     //private void BaseObjectToStringDebug<T>(BaseGrid<T> map, TextMesh[,] debugTextArray)
