@@ -28,7 +28,7 @@ public class Testing : MonoBehaviour
 
         var generator = new MapGenerator(WidthInCells, HeightInCells, fillPercent: 48, smoothing: 2, seed: 903168484);
 
-        generator.Map.OnGridCellChanged += (object sender, Grid.OnGridCellChangedEventArgs args) =>
+        generator.Map.OnGridCellChanged += (object sender, OnGridCellChangedEventArgs args) =>
         {
             if (sender is not Grid map)
             {
