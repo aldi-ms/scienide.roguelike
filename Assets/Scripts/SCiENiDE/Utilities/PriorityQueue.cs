@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace SCiENiDE.Core
+namespace SCiENiDE.Utilities
 {
     public class PriorityQueue<T>
     {

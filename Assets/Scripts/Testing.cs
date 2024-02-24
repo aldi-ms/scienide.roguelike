@@ -4,8 +4,8 @@ using System.Diagnostics;
 using UnityEngine;
 
 using Debug = UnityEngine.Debug;
-using Random = UnityEngine.Random;
 using Grid = SCiENiDE.Core.Grid;
+using SCiENiDE.Utilities;
 
 public class Testing : MonoBehaviour
 {
@@ -17,7 +17,7 @@ public class Testing : MonoBehaviour
 
     private readonly static List<int> _customSeeds = new List<int> {
         23013203,
-        122014906,
+        122014906, 
     };
 
     private static Grid _map;

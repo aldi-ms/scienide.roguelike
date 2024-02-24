@@ -1,8 +1,9 @@
-﻿using Mono.CompilerServices.SymbolWriter;
+﻿using SCiENiDE.Core;
+using SCiENiDE.Core.GameObjects;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace SCiENiDE.Core
+namespace SCiENiDE.Utilities
 {
     public class Utils
     {

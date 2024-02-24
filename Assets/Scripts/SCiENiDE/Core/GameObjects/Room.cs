@@ -1,9 +1,9 @@
-﻿using SCiENiDE.Core;
+﻿using SCiENiDE.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Assets.Scripts.SCiENiDE.Core
+namespace SCiENiDE.Core.GameObjects
 {
     public class Room : IComparable<Room>
     {

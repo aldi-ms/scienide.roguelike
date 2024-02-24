@@ -1,4 +1,6 @@
-﻿namespace SCiENiDE.Core
+﻿using SCiENiDE.Utilities;
+
+namespace SCiENiDE.Core.GameObjects
 {
     public class NodeTerrain
     {

@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace SCiENiDE.Core
+namespace SCiENiDE.Core.GameObjects
 {
     public interface IPathNode
     {

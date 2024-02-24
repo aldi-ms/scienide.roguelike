@@ -1,4 +1,5 @@
-﻿using Assets.Scripts.SCiENiDE.Core;
+﻿using SCiENiDE.Core.GameObjects;
+using SCiENiDE.Utilities;
 using System;
 using System.Collections.Generic;
 using System.Linq;

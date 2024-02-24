@@ -1,6 +1,7 @@
-﻿using UnityEngine;
+﻿using SCiENiDE.Utilities;
+using UnityEngine;
 
-namespace SCiENiDE.Core
+namespace SCiENiDE.Core.GameObjects
 {
     public class PathNode : IPathNode
     {
@@ -8,16 +9,17 @@ namespace SCiENiDE.Core
         private readonly int _y;
         private NodeTerrain _terrain;
 
-        public PathNode(int x, int y, MoveDifficulty moveDifficulty = MoveDifficulty.Medium)
+        public PathNode(int x, int y, MoveDifficulty terrainDifficulty)
         {
             _x = x;
             _y = y;
             Coords = new Vector2(x, y);
             _terrain = new NodeTerrain
             {
-                Difficulty = moveDifficulty
+                Difficulty = terrainDifficulty
             };
 
+            // For pathfinding
             Visited = false;
             IsPath = false;
             fScore = 0;
