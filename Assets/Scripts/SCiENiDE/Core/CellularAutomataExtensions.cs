@@ -9,14 +9,14 @@ namespace SCiENiDE.Core
     public static class CellularAutomataExtensions
     {
         #region Rulesets
-        private static Dictionary<MapType, Func<IEnumerable<PathNode>, NodeTerrain, MoveDifficulty>> _rulesets
-            = new Dictionary<MapType, Func<IEnumerable<PathNode>, NodeTerrain, MoveDifficulty>>
+        private static readonly Dictionary<MapType, Func<List<PathNode>, NodeTerrain, MoveDifficulty>> _rulesets
+            = new()
             {
                 {
                     MapType.Rooms,
-                    (IEnumerable<PathNode> neighbours, NodeTerrain currentTerrain) =>
+                    (List<PathNode> neighbours, NodeTerrain currentTerrain) =>
                     {
-                        int d = 8 - neighbours.Count(); // TODO: IEnumerable maybe is not the best here since Count is not O(1) operation, but it'll do for now
+                        int d = 8 - neighbours.Count;
                         int wallCount = 8 - neighbours.Count(x => x.Terrain.Difficulty == MoveDifficulty.NotWalkable) + d;
                         if (wallCount >= 6) return MoveDifficulty.Easy;
                         if (wallCount >= 4) return MoveDifficulty.Medium;
@@ -27,9 +27,9 @@ namespace SCiENiDE.Core
                 },
                 {
                     MapType.RandomFill,
-                    (IEnumerable<PathNode> neighbours, NodeTerrain currentTerrain) =>
+                    (List<PathNode> neighbours, NodeTerrain currentTerrain) =>
                     {
-                        int d = 8 - neighbours.Count();
+                        int d = 8 - neighbours.Count;
                         int wallCount = neighbours.Count(x => x.Terrain.Difficulty == MoveDifficulty.NotWalkable) + d;
                         if (wallCount > 4) return MoveDifficulty.NotWalkable;
                         if (wallCount < 4) return MoveDifficulty.Easy;
@@ -47,7 +47,7 @@ namespace SCiENiDE.Core
                 for (int y = 0; y < map.Height; y++)
                 {
                     var node = map[x, y];
-                    var result = _rulesets[mapType](map.GetNeighbourNodesCached(node.Coords), node.Terrain);
+                    var result = _rulesets[mapType](map.GetNeighbourNodesWithCache(node.Coords), node.Terrain);
                     modifiedMap[x, y] = result;
                 }
             }

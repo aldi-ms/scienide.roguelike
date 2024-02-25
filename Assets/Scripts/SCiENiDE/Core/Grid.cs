@@ -17,7 +17,7 @@ namespace SCiENiDE.Core
         private readonly PathNode[,] _gridArray;
         private readonly Component[,] _cellVisualArray;
         private Vector3 _originPosition;
-        private Dictionary<Vector2, IEnumerable<PathNode>> _neighbourCache;
+        private Dictionary<Vector2, List<PathNode>> _neighbourCache;
 
         public Grid(
             int width,
@@ -30,7 +30,7 @@ namespace SCiENiDE.Core
             _height = height;
             _cellSize = cellSize;
             _originPosition = originPosition;
-            _neighbourCache = new Dictionary<Vector2, IEnumerable<PathNode>>();
+            _neighbourCache = new Dictionary<Vector2, List<PathNode>>();
 
             _gridArray = new PathNode[_width, _height];
             _cellVisualArray = new Component[_width, _height];
@@ -73,7 +73,7 @@ namespace SCiENiDE.Core
             get { return _cellSize; }
         }
 
-        public IEnumerable<PathNode> GetNeighbourNodesCached(Vector2 nodeCoordinates)
+        public List<PathNode> GetNeighbourNodesWithCache(Vector2 nodeCoordinates)
         {
             // TODO: implement option to reset neighbours of a cell/ reload cache
             if (_neighbourCache.ContainsKey(nodeCoordinates))
@@ -101,7 +101,7 @@ namespace SCiENiDE.Core
 
             _neighbourCache.Add(nodeCoordinates, neighbourNodes);
 
-            return neighbourNodes.ToArray();
+            return neighbourNodes;
         }
 
         public void SetGridCell(int x, int y, PathNode value)

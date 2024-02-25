@@ -28,7 +28,7 @@ namespace SCiENiDE.Core.GameObjects
 
             foreach (var tile in roomTiles)
             {
-                if (map.GetNeighbourNodesCached(tile.Coords).Any(x => x.Terrain.Difficulty == MoveDifficulty.NotWalkable))
+                if (map.GetNeighbourNodesWithCache(tile.Coords).Any(x => x.Terrain.Difficulty == MoveDifficulty.NotWalkable))
                 {
                     _edgeTiles.Add(tile);
                 }

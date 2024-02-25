@@ -72,14 +72,13 @@ namespace SCiENiDE.Core
                         {
                             _map.RunCARuleset(mapType);
                         }
-
                     }
                     break;
 
                 case MapType.RandomFill:
                     {
                         RandomFillMap(_fillPercent);
-                        _map.TriggerAllGridCellsChanged();
+                        //_map.TriggerAllGridCellsChanged();
                         for (int i = 0; i < _smoothing; i++)
                         {
                             _map.RunCARuleset(mapType);
@@ -104,6 +103,7 @@ namespace SCiENiDE.Core
 
         private void LoadMapFeatures()
         {
+            /// TODO: There is an issue where separate rooms are not connected to each other
             Dictionary<MoveDifficulty, List<Room>> roomRegions = GetMapRegions();
             Dictionary<MoveDifficulty, List<Room>> survivingRoomRegions = new Dictionary<MoveDifficulty, List<Room>>();
             foreach (MoveDifficulty moveDifficultyKey in roomRegions.Keys)
@@ -387,7 +387,7 @@ namespace SCiENiDE.Core
                 var current = open.Dequeue();
                 closed.Add(current);
 
-                var neigbourNodesPerDifficulty = map.GetNeighbourNodesCached(current.Coords)
+                var neigbourNodesPerDifficulty = map.GetNeighbourNodesWithCache(current.Coords)
                     .Where(n => n.Terrain.Difficulty == startNode.Terrain.Difficulty);
                 foreach (var neighbour in neigbourNodesPerDifficulty)
                 {

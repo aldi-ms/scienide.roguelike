@@ -71,7 +71,7 @@ namespace SCiENiDE.Core
                     break;
                 }
 
-                var walkableNeighbourNodes = map.GetNeighbourNodesCached(currentNode.Coords)
+                var walkableNeighbourNodes = map.GetNeighbourNodesWithCache(currentNode.Coords)
                     .Where(x => x.Terrain.Difficulty != MoveDifficulty.NotWalkable);
                 foreach (var node in walkableNeighbourNodes)
                 {

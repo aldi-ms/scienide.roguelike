@@ -7,7 +7,7 @@ using Debug = UnityEngine.Debug;
 using Grid = SCiENiDE.Core.Grid;
 using SCiENiDE.Utilities;
 
-public class Testing : MonoBehaviour
+public class Playground : MonoBehaviour
 {
     [SerializeField]
     private int WidthInCells = 64;
@@ -63,6 +63,7 @@ public class Testing : MonoBehaviour
 
     private void Update()
     {
+        /// TODO: actually move update logic here
         if (Input.GetMouseButtonDown(0))
         {
             var node = _map.GetMousePositionInGrid();
