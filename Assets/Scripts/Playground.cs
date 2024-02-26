@@ -17,7 +17,8 @@ public class Playground : MonoBehaviour
 
     private readonly static List<int> _customSeeds = new List<int> {
         23013203,
-        122014906, 
+        122014906,
+        903168484 // pathfinding bug repro
     };
 
     private static Grid _map;
@@ -26,7 +27,7 @@ public class Playground : MonoBehaviour
     {
         var sw = Stopwatch.StartNew();
 
-        var generator = new MapGenerator(WidthInCells, HeightInCells, fillPercent: 48, smoothing: 2, seed: 903168484);
+        var generator = new MapGenerator(WidthInCells, HeightInCells, fillPercent: 48, smoothing: 2);
 
         generator.Map.OnGridCellChanged += (object sender, OnGridCellChangedEventArgs args) =>
         {
@@ -57,8 +58,8 @@ public class Playground : MonoBehaviour
         // Play around with pathfinding
         var path = AStarPathfinding.Pathfind(
             _map,
-            _map.GetPathNode(42, 3),//map.GetRandomAvailablePathNode(),
-            _map.GetPathNode(3, 2));//map.GetRandomAvailablePathNode());
+            _map.GetRandomAvailablePathNode(),//_map.GetPathNode(42, 3), // pathfinding bug repro
+            _map.GetRandomAvailablePathNode()); //_map.GetPathNode(3, 2));
     }
 
     private void Update()
