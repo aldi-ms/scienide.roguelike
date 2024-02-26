@@ -1,5 +1,4 @@
-﻿using SCiENiDE.Core;
-using SCiENiDE.Core.GameObjects;
+﻿using SCiENiDE.Core.GameObjects;
 using System.Collections.Generic;
 using UnityEngine;
 

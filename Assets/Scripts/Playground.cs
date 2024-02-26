@@ -1,11 +1,10 @@
 ﻿using SCiENiDE.Core;
+using SCiENiDE.Utilities;
 using System.Collections.Generic;
 using System.Diagnostics;
 using UnityEngine;
-
 using Debug = UnityEngine.Debug;
 using Grid = SCiENiDE.Core.Grid;
-using SCiENiDE.Utilities;
 
 public class Playground : MonoBehaviour
 {
