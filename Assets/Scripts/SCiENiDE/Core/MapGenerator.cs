@@ -10,19 +10,19 @@ namespace SCiENiDE.Core
 {
     public class MapGenerator
     {
-        private int _width;
-        private int _height;
-        private int _totalNodeCount;
-        private int _seed;
-        private int _fillPercent;
-        private int _smoothing;
-
-        private RectInt[] _rooms;
+        private readonly int _width;
+        private readonly int _height;
+        private readonly int _totalNodeCount;
+        private readonly int _seed;
+        private readonly int _fillPercent;
+        private readonly int _smoothing;
+        private readonly RectInt[] _rooms;
         private Grid _map;
 
         public MapGenerator(
             int width,
             int height,
+            int cellSize,
             int seed = -1,
             int fillPercent = 43,
             int smoothing = 2)
@@ -52,7 +52,11 @@ namespace SCiENiDE.Core
             int maxRoomsRange = 20;
             _rooms = new RectInt[Random.Range(minRoomsRange, maxRoomsRange)];
 
-            _map = new Grid(_width, _height, 5f, new Vector3(-110f, -60f), (x, y) => new PathNode(x, y, MoveDifficulty.Easy));
+            // Map coordinate [0,0] is bottom left
+            var bottomLeftOrigin = Camera.main.ScreenToWorldPoint(Vector3.zero);
+            bottomLeftOrigin.z = 0;
+
+            _map = new Grid(_width, _height, cellSize, bottomLeftOrigin);
         }
 
         public Grid Map
@@ -68,6 +72,7 @@ namespace SCiENiDE.Core
                 case MapType.Rooms:
                     {
                         GenerateRooms();
+
                         for (int i = 0; i < _smoothing; i++)
                         {
                             _map.RunCARuleset(mapType);
@@ -78,7 +83,7 @@ namespace SCiENiDE.Core
                 case MapType.RandomFill:
                     {
                         RandomFillMap(_fillPercent);
-                        //_map.TriggerAllGridCellsChanged();
+
                         for (int i = 0; i < _smoothing; i++)
                         {
                             _map.RunCARuleset(mapType);
@@ -87,12 +92,10 @@ namespace SCiENiDE.Core
                     break;
 
                 case MapType.SolidFill:
+                default:
                     {
                         Debug.LogWarning($"GenerateMap for {mapType.ToString()} is not defined!");
                     }
-                    break;
-
-                default:
                     break;
             }
 
@@ -103,9 +106,9 @@ namespace SCiENiDE.Core
 
         private void LoadMapFeatures()
         {
-            /// TODO: There is an issue where separate rooms are not connected to each other
             Dictionary<MoveDifficulty, List<Room>> roomRegions = GetMapRegions();
-            Dictionary<MoveDifficulty, List<Room>> survivingRoomRegions = new Dictionary<MoveDifficulty, List<Room>>();
+            Dictionary<MoveDifficulty, List<Room>> survivingRoomRegions = new();
+
             foreach (MoveDifficulty moveDifficultyKey in roomRegions.Keys)
             {
                 if (moveDifficultyKey == MoveDifficulty.NotWalkable) continue;
@@ -183,6 +186,7 @@ namespace SCiENiDE.Core
             PathNode bestNodeA = null;
             PathNode bestNodeB = null;
             bool matchFound = false;
+
             foreach (Room roomA in roomListA)
             {
                 if (!forceConnect)
@@ -261,39 +265,36 @@ namespace SCiENiDE.Core
             }
         }
 
-        private Vector3 CoordToWorldPoint(int x, int y)
-        {
-            return new Vector3(-_width / 2 + .5f + x, 2, -_height / 2 + .5f + y);
-        }
-
         private Dictionary<MoveDifficulty, List<Room>> GetMapRegions()
         {
-            Dictionary<MoveDifficulty, List<Room>> roomRegions = new Dictionary<MoveDifficulty, List<Room>>();
-            for (int x = 0; x < _width; x++)
+            var roomRegions = new Dictionary<MoveDifficulty, List<Room>>();
+
+            _map.ForEachCoordinate((x, y) =>
             {
-                for (int y = 0; y < _height; y++)
+                var currentNode = _map.GetPathNode(x, y);
+                if (currentNode == null)
                 {
-                    var currentNode = _map.GetPathNode(x, y);
-                    if (currentNode == null) continue;
+                    Debug.LogError($"GetMapRegions: PathNode at [{x},{y}] is null!");
+                    return;
+                }
 
-                    MoveDifficulty currentTerrain = currentNode.Terrain.Difficulty;
+                MoveDifficulty terrainDifficulty = currentNode.Terrain.Difficulty;
 
-                    if (!roomRegions.ContainsKey(currentTerrain)
-                        || !roomRegions[currentTerrain].Any(r => r.Tiles.Contains(currentNode)))
+                if (!roomRegions.ContainsKey(terrainDifficulty)
+                    || !roomRegions[terrainDifficulty].Any(r => r.Tiles.Contains(currentNode)))
+                {
+                    var currentRegion = GetRegionTiles(x, y, _map);
+                    var room = new Room(currentRegion, _map);
+                    if (roomRegions.ContainsKey(terrainDifficulty))
                     {
-                        var currentRegion = GetRegionTiles(x, y, _map);
-                        Room room = new Room(currentRegion, _map);
-                        if (roomRegions.ContainsKey(currentTerrain))
-                        {
-                            roomRegions[currentTerrain].Add(room);
-                        }
-                        else
-                        {
-                            roomRegions[currentTerrain] = new List<Room> { room };
-                        }
+                        roomRegions[terrainDifficulty].Add(room);
+                    }
+                    else
+                    {
+                        roomRegions[terrainDifficulty] = new List<Room> { room };
                     }
                 }
-            }
+            });
 
             return roomRegions;
         }
@@ -316,6 +317,7 @@ namespace SCiENiDE.Core
 
         private Vector2Int GetRandomRoomSize()
         {
+            // TODO: get random upper/lower bounds
             return new Vector2Int(Random.Range(3, 7), Random.Range(3, 6));
         }
 
@@ -357,16 +359,16 @@ namespace SCiENiDE.Core
             return createdRoom;
         }
 
-        private void RandomFillMap(int wallPercent = 43)
+        private void RandomFillMap(int wallPercent)
         {
-            for (int x = 0; x < _width; x++)
+            _map.ForEachCoordinate((x, y) =>
             {
-                for (int y = 0; y < _height; y++)
-                {
-                    var z = Random.Range(0, 100);
-                    _map[x, y].Terrain.Difficulty = z < wallPercent ? MoveDifficulty.NotWalkable : MoveDifficulty.Easy;
-                }
-            }
+                _map[x, y].Terrain.Difficulty = 
+                    Random.Range(0, 100) < wallPercent 
+                        ? MoveDifficulty.NotWalkable 
+                        : MoveDifficulty.Easy;
+            });
+
         }
 
         private List<PathNode> GetRegionTiles(int x, int y, Grid map)
@@ -399,11 +401,6 @@ namespace SCiENiDE.Core
             }
 
             return closed;
-        }
-
-        private bool IsValidMapBounds(int x, int y)
-        {
-            return x >= 0 && x < _width && y >= 0 && y < _height;
         }
     }
 }

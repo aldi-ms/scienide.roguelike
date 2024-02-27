@@ -36,30 +36,27 @@ namespace SCiENiDE.Core
                         return currentTerrain.Difficulty;
                     }
                 }
+
+                // TODO: create a random fill with random difficulty patches
             };
         #endregion
 
         public static void RunCARuleset(this Grid map, MapType mapType)
         {
             MoveDifficulty[,] modifiedMap = new MoveDifficulty[map.Width, map.Height];
-            for (int x = 0; x < map.Width; x++)
-            {
-                for (int y = 0; y < map.Height; y++)
-                {
-                    var node = map[x, y];
-                    var result = _rulesets[mapType](map.GetNeighbourNodesWithCache(node.Coords), node.Terrain);
-                    modifiedMap[x, y] = result;
-                }
-            }
 
-            for (int x = 0; x < map.Width; x++)
+            map.ForEachCoordinate((x, y) =>
             {
-                for (int y = 0; y < map.Height; y++)
-                {
-                    map[x, y].Terrain.Difficulty = modifiedMap[x, y];
-                    map.TriggerOnGridCellChanged(x, y);
-                }
-            }
+                var node = map[x, y];
+                var result = _rulesets[mapType](map.GetNeighbourNodesWithCache(node.Coords), node.Terrain);
+                modifiedMap[x, y] = result;
+            });
+
+            map.ForEachCoordinate((x, y) =>
+            {
+                map[x, y].Terrain.Difficulty = modifiedMap[x, y];
+                map.TriggerOnGridCellChanged(x, y);
+            });
         }
     }
 }

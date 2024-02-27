@@ -76,25 +76,22 @@ namespace SCiENiDE.Utilities
             Color color,
             Vector3 localPosition = default(Vector3))
         {
-            // Create a new 16x16 texture
-            int textureSize = Mathf.FloorToInt(size);
-            Texture2D redTexture = new Texture2D(textureSize, textureSize);
+            int text2dSize = Mathf.FloorToInt(size);
+            Texture2D texture = new Texture2D(text2dSize, text2dSize);
 
-            // Fill the texture with red color
-            //Color red = new Color(1f, 0f, 0f, 1f); // Red (RGBA)
-            for (int x = 0; x < textureSize; x++)
+            for (int x = 0; x < text2dSize; x++)
             {
-                for (int y = 0; y < textureSize; y++)
+                for (int y = 0; y < text2dSize; y++)
                 {
-                    redTexture.SetPixel(x, y, color);
+                    texture.SetPixel(x, y, color);
                 }
             }
-            redTexture.Apply(); // Apply changes to the texture
+            texture.Apply(); // Apply changes to the texture
 
             // Create a new GameObject with a Sprite Renderer
             GameObject rectangleObject = new GameObject("Tile");
             SpriteRenderer spriteRenderer = rectangleObject.AddComponent<SpriteRenderer>();
-            spriteRenderer.sprite = Sprite.Create(redTexture, new Rect(0, 0, textureSize, textureSize), Vector2.one * 0.5f, 5);
+            spriteRenderer.sprite = Sprite.Create(texture, new Rect(0, 0, text2dSize, text2dSize), Vector2.one * 0.5f, text2dSize);
 
             // Adjust position, scale, etc. as needed
             rectangleObject.transform.localPosition = localPosition;

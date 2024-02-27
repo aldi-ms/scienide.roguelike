@@ -2,6 +2,7 @@
 using SCiENiDE.Utilities;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
@@ -13,37 +14,29 @@ namespace SCiENiDE.Core
 
         private readonly int _width;
         private readonly int _height;
-        private readonly float _cellSize;
+        private readonly int _cellSize;
         private readonly PathNode[,] _gridArray;
         private readonly Component[,] _cellVisualArray;
+        private readonly Dictionary<Vector2, List<PathNode>> _neighbourCache;
         private Vector3 _originPosition;
-        private Dictionary<Vector2, List<PathNode>> _neighbourCache;
 
         public Grid(
             int width,
             int height,
-            float cellSize,
-            Vector3 originPosition,
-            Func<int, int, PathNode> createGridCellFunc)
+            int cellSize,
+            Vector3 bottomLeftOrigin)
         {
             _width = width;
             _height = height;
             _cellSize = cellSize;
-            _originPosition = originPosition;
+            _originPosition = bottomLeftOrigin;
             _neighbourCache = new Dictionary<Vector2, List<PathNode>>();
 
             _gridArray = new PathNode[_width, _height];
             _cellVisualArray = new Component[_width, _height];
 
-            for (int x = 0; x < _gridArray.GetLength(0); x++)
-            {
-                for (int y = 0; y < _gridArray.GetLength(1); y++)
-                {
-                    _gridArray[x, y] = createGridCellFunc(x, y);
-                }
-            }
-
-            InitializeComponentArray(ref _cellVisualArray);
+            ForEachCoordinate((x, y) => _gridArray[x, y] = new PathNode(x, y, MoveDifficulty.NotWalkable));
+            InitializeComponentArray(_cellVisualArray);
         }
 
         public PathNode this[int x, int y]
@@ -106,7 +99,7 @@ namespace SCiENiDE.Core
 
         public void SetGridCell(int x, int y, PathNode value)
         {
-            if (x >= 0 && y >= 0 && x < _width && y < _height)
+            if (IsValidBounds(x, y))
             {
                 _gridArray[x, y] = value;
                 OnGridCellChanged?.Invoke(this, new OnGridCellChangedEventArgs { x = x, y = y, CellMap = _cellVisualArray });
@@ -121,7 +114,7 @@ namespace SCiENiDE.Core
 
         public PathNode GetPathNode(int x, int y)
         {
-            if (x >= 0 && y >= 0 && x < _width && y < _height)
+            if (IsValidBounds(x, y))
             {
                 return _gridArray[x, y];
             }
@@ -129,21 +122,16 @@ namespace SCiENiDE.Core
             return default;
         }
 
-        public PathNode GetGridCell(Vector3 worldPosition)
+        public PathNode GetGridCellAtMousePosition()
         {
+            var worldPosition = Utils.GetMouseWorldPosition();
             WorldPositionToGridPosition(worldPosition, out int x, out int y);
             return GetPathNode(x, y);
         }
 
         public void TriggerAllGridCellsChanged()
         {
-            for (int x = 0; x < _width; x++)
-            {
-                for (int y = 0; y < _height; y++)
-                {
-                    TriggerOnGridCellChanged(x, y);
-                }
-            }
+            ForEachCoordinate((x, y) => TriggerOnGridCellChanged(x, y));
         }
 
         public void TriggerOnGridCellChanged(int x, int y)
@@ -180,36 +168,31 @@ namespace SCiENiDE.Core
             return GetPathNode(x, y);
         }
 
-        public PathNode GetMousePositionInGrid()
-        {
-            var mousePos = Utils.GetMouseWorldPosition();
-            WorldPositionToGridPosition(mousePos, out int x, out int y);
-            return GetPathNode(x, y);
-        }
-
-        private void InitializeComponentArray(ref Component[,] visualArray)
+        public void ForEachCoordinate(Action<int, int> action)
         {
             for (int x = 0; x < Width; x++)
             {
                 for (int y = 0; y < Height; y++)
                 {
+                    action(x, y);
+                }
+            }
+        }
+
+        public bool IsValidBounds(int x, int y)
+        {
+            return x >= 0 && x < _width && y >= 0 && y < _height;
+        }
+
+        private void InitializeComponentArray(Component[,] visualArray)
+        {
+            var cellSizeVector = new Vector3(CellSize, CellSize) * .5f;
+
+            ForEachCoordinate((x, y) =>
                     visualArray[x, y] = Utils.CreateMapCell(
                         CellSize,
                         Utils.GetPathNodeColor(GetPathNode(x, y)),
-                        GetWorldPosition(x, y) + new Vector3(CellSize, CellSize) * .5f);
-
-                    //displayMap[x, y] = Utils.CreateWorldText(
-                    //    $"{x}:{y}",
-                    //    null,
-                    //    map.GetWorldPosition(x, y) + new Vector3(map.CellSize, map.CellSize) * .5f,
-                    //    12,
-                    //    GetPathNodeColor(map.GetPathNode(x, y)),
-                    //    TextAnchor.MiddleCenter);
-                }
-            }
-
-            Debug.DrawLine(GetWorldPosition(0, Height), GetWorldPosition(Width, Height), Color.white, 100f);
-            Debug.DrawLine(GetWorldPosition(Width, 0), GetWorldPosition(Width, Height), Color.white, 100f);
+                        GetWorldPosition(x, y) + cellSizeVector));
         }
     }
 

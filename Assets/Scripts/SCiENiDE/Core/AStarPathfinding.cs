@@ -21,6 +21,7 @@ namespace SCiENiDE.Core
 
             return Pathfind(map, startNode, endNode);
         }
+
         public static PathNode[] Pathfind(Grid map, PathNode startNode, PathNode endNode)
         {
             if (endNode == null || endNode.Terrain.Difficulty == MoveDifficulty.NotWalkable)

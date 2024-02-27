@@ -2,6 +2,7 @@
 using SCiENiDE.Utilities;
 using System.Collections.Generic;
 using System.Diagnostics;
+using UnityEditor.U2D.Animation;
 using UnityEngine;
 using Debug = UnityEngine.Debug;
 using Grid = SCiENiDE.Core.Grid;
@@ -25,8 +26,7 @@ public class Playground : MonoBehaviour
     private void Start()
     {
         var sw = Stopwatch.StartNew();
-
-        var generator = new MapGenerator(WidthInCells, HeightInCells, fillPercent: 48, smoothing: 2);
+        var generator = new MapGenerator(WidthInCells, HeightInCells, 3, fillPercent: 44, smoothing:2);
 
         generator.Map.OnGridCellChanged += (object sender, OnGridCellChangedEventArgs args) =>
         {
@@ -57,8 +57,8 @@ public class Playground : MonoBehaviour
         // Play around with pathfinding
         var path = AStarPathfinding.Pathfind(
             _map,
-            _map.GetRandomAvailablePathNode(),//_map.GetPathNode(42, 3), // pathfinding bug repro
-            _map.GetRandomAvailablePathNode()); //_map.GetPathNode(3, 2));
+            _map.GetRandomAvailablePathNode(),//_map.GetPathNode(42, 3), // pathfinding bug repro 
+            _map.GetRandomAvailablePathNode()); //_map.GetPathNode(3, 2)); // 
     }
 
     private void Update()
@@ -66,8 +66,12 @@ public class Playground : MonoBehaviour
         /// TODO: actually move update logic here
         if (Input.GetMouseButtonDown(0))
         {
-            var node = _map.GetMousePositionInGrid();
-            Debug.Log(node.ToLongString());
+            Debug.Log($"World mouse pos: [{Utils.GetMouseWorldPosition()}].");
+            Debug.Log($"Raw mouse pos: [{Input.mousePosition}].");
+
+            var node = _map.GetGridCellAtMousePosition();
+            if (node != null)
+                Debug.Log(node.ToLongString());
         }
     }
 }
